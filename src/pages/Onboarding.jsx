@@ -40,13 +40,18 @@ export default function Onboarding() {
   }, []);
 
   const onSubmit = async (data) => {
-    try {
-      await createOrganization(data);
-      navigate("/dashboard");
-    } catch {
-      alert("Organization creation failed");
-    }
-  };
+  try {
+    const response = await createOrganization(data);
+
+    const orgId = response.data.id;
+
+    localStorage.setItem("orgId", orgId);
+
+    navigate("/dashboard");
+  } catch {
+    alert("Organization creation failed");
+  }
+};
 
   return (
     <div className="relative min-h-screen bg-[#0f0f13] text-white font-sans flex items-center justify-center overflow-hidden p-6">

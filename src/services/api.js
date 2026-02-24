@@ -94,11 +94,10 @@ API.interceptors.response.use(
 
         return API(originalRequest);
       } catch (refreshError) {
-        isRefreshing = false;
-
-        
-        return Promise.reject(refreshError);
-      }
+  isRefreshing = false;
+  logoutUser();
+  return Promise.reject(refreshError);
+}
     }
 
     return Promise.reject(error);
@@ -108,6 +107,7 @@ API.interceptors.response.use(
 function logoutUser() {
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
+  localStorage.removeItem("orgId");
   window.location.href = "/login";
 }
 

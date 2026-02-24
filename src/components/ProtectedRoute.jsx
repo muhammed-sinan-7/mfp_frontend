@@ -1,11 +1,21 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
-export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("accessToken");
+function ProtectedRoute({ children }) {
+  const location = useLocation();
+  const accessToken = localStorage.getItem("accessToken");
+  const orgId = localStorage.getItem("orgId");
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  // Not authenticated
+  if (!accessToken) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Authenticated but no organization
+  if (!orgId && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return children;
 }
+
+export default ProtectedRoute;
