@@ -10,7 +10,11 @@ import Overview from "./features/Dashboard/Overview";
 import "./App.css";
 import LandingPage from "./pages/Landing";
 import ConnectedAccounts from "./pages/ConnectedAccounts";
-
+import AuditLogs from "./pages/AuditLogs";
+import SchedulePage from "./pages/Schedule";
+import CreatePost from "./pages/CreatePost";
+import PostsPage from "./pages/PostManagement";
+{/* <Route path="/dashboard/audit" element={<AuditLogs />} /> */}
 function App() {
   return (
     <Router>
@@ -54,11 +58,16 @@ function App() {
             </ProtectedRoute>
           }
         >
+         
           <Route index element={<Overview />} />
           <Route path="analytics" element={<div>Analytics</div>} />
           <Route path="team" element={<div>Team</div>} />
           <Route path="settings" element={<div>Settings</div>} />
           <Route path="accounts" element={<ConnectedAccounts />} />
+          <Route path="audit" element={<AuditLogs />} />
+          <Route path="scheduler" element={<SchedulePage />} />
+          <Route path="posts" element={<PostsPage />} />
+          
         </Route>
       </Routes>
     </Router>

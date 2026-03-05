@@ -2,15 +2,17 @@ function StatCard({ title, value, growth }) {
   const isPositive = growth.includes("+");
 
   return (
-    <div className="bg-[#16161d] border border-[#2a2a33] p-6 rounded-2xl">
-      <div className="flex justify-between text-xs text-gray-400">
+    <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+      <div className="flex justify-between text-xs text-gray-500">
         <span>{title}</span>
-        <span className={isPositive ? "text-green-400" : "text-red-400"}>
+        <span className={isPositive ? "text-green-500" : "text-red-500"}>
           {growth}
         </span>
       </div>
 
-      <h2 className="text-2xl font-bold mt-4">{value}</h2>
+      <h2 className="text-2xl font-semibold mt-4 text-gray-900">
+        {value}
+      </h2>
     </div>
   );
 }

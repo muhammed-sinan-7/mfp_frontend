@@ -5,31 +5,30 @@ import {
   ChartBarIcon,
   UsersIcon,
   Cog6ToothIcon,
- 
   LinkIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 
 function Sidebar() {
   const navItems = [
     { name: "Dashboard", icon: HomeIcon, path: "/dashboard" },
-    { name: "Scheduler", icon: CalendarIcon, path: "/dashboard/scheduler" },
-    { name: "Accounts", icon: LinkIcon, path: "/dashboard/accounts" },
-    { name: "Analytics", icon: ChartBarIcon, path: "/dashboard/analytics" },
-    { name: "Team", icon: UsersIcon, path: "/dashboard/team" },
+    { name: "Connected Accounts", icon: LinkIcon, path: "/dashboard/accounts" },
+    { name: "Post Management", icon: ClipboardDocumentListIcon, path: "/dashboard/posts" },
+    { name: "Schedule", icon: CalendarIcon, path: "/dashboard/scheduler" },
+    { name: "Team Members", icon: UsersIcon, path: "/dashboard/team" },
+    { name: "Audit Logs", icon: ChartBarIcon, path: "/dashboard/audit" },
     { name: "Settings", icon: Cog6ToothIcon, path: "/dashboard/settings" },
   ];
 
   return (
-    <div className="w-64 bg-[#111118] border-r border-gray-800 flex flex-col justify-between">
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between">
 
-      {/* Logo */}
       <div>
-        <div className="p-6 text-2xl font-bold text-[#7c5dfa]">
+        <div className="px-6 py-5 text-xl font-semibold text-blue-600">
           MFP
         </div>
 
-        {/* Navigation */}
-        <nav className="px-4 space-y-2">
+        <nav className="px-4 space-y-1">
           {navItems.map((item) => (
             <NavLink
               key={item.name}
@@ -37,8 +36,8 @@ function Sidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
                   isActive
-                    ? "bg-[#7c5dfa]/20 text-[#7c5dfa]"
-                    : "text-gray-400 hover:bg-[#1c1c24]"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-600 hover:bg-gray-100"
                 }`
               }
             >
@@ -49,16 +48,14 @@ function Sidebar() {
         </nav>
       </div>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4 border-t border-gray-200">
         <button
           onClick={() => {
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="flex items-center gap-3 text-gray-400 hover:text-white transition"
+          className="text-sm text-gray-500 hover:text-gray-800 transition"
         >
-          {/* <ArrowLeftOnRectangleIcon className="w-5 h-5" /> */}
           Logout
         </button>
       </div>

@@ -1,0 +1,51 @@
+
+import API from "./api";
+
+
+
+export const createPost = (data) => {
+  return API.post("/posts/create/", data);
+};
+
+
+
+export const getPosts = (page = 1) => {
+  return API.get(`/posts/?page=${page}`);
+};
+
+
+
+export const getPostDetail = (postId) => {
+  return API.get(`/posts/${postId}/`);
+};
+
+
+export const updatePost = (postId, data) => {
+  return API.patch(`/posts/${postId}/edit/`, data);
+};
+
+
+export const deletePost = (postId) => {
+  return API.delete(`/posts/${postId}/delete/`);
+};
+
+
+export const restorePost = (postId) => {
+  return API.post(`/posts/${postId}/restore/`);
+};
+
+
+export const getRecycleBinPosts = () => {
+  return API.get("/posts/recycle-bin/");
+};
+
+
+export const getSocialAccounts = () => {
+  return API.get("/social-accounts/");
+};
+
+
+export const getPublishingTargets = () => {
+  return API.get("/social/publishing-targets/");
+};
+

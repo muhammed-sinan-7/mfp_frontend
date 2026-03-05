@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { PlusIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  ArrowPathIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
 import { socialList } from "../services/accountService";
 import ConnectAccountModal from "../components/connectaccountmodel/ConnectAccountModal";
 
@@ -13,7 +17,6 @@ function ConnectedAccounts() {
     const fetchAccounts = async () => {
       try {
         const data = await socialList();
-        console.log(data);
         setAccounts(data.data || []);
       } catch (err) {
         setError("Failed to load accounts");
@@ -21,158 +24,182 @@ function ConnectedAccounts() {
         setLoading(false);
       }
     };
-
     fetchAccounts();
   }, []);
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-500/20 text-green-400";
-      case "expiring":
-        return "bg-yellow-500/20 text-yellow-400";
-      case "disconnected":
-        return "bg-red-500/20 text-red-400";
-      default:
-        return "bg-gray-500/20 text-gray-400";
-    }
-  };
-
   const calculateTokenHealth = (expiresAt) => {
     if (!expiresAt) return 0;
-
     const now = new Date();
     const expiry = new Date(expiresAt);
     const totalDuration = 60 * 24 * 60 * 60 * 1000;
     const remaining = expiry - now;
-
     const percentage = (remaining / totalDuration) * 100;
-
     return Math.max(0, Math.min(100, Math.round(percentage)));
   };
 
-  if (loading) {
-    return <div className="p-8 text-gray-400">Loading accounts...</div>;
-  }
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">{error}</div>;
 
-  if (error) {
-    return <div className="p-8 text-red-400">{error}</div>;
-  }
+  const flattenedTargets = accounts.flatMap((account) =>
+    (account.publishing_targets || []).map((target) => ({
+      ...target,
+      parentAccount: account,
+    }))
+  );
+
+  const healthy = flattenedTargets.filter(
+    (t) => calculateTokenHealth(t.parentAccount.token_expires_at) > 60
+  ).length;
+
+  const alerts = flattenedTargets.filter(
+    (t) => calculateTokenHealth(t.parentAccount.token_expires_at) < 20
+  ).length;
 
   return (
-    <div className="p-8 text-white">
+    <div className="space-y-8">
+
       <ConnectAccountModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
       />
-      <div className="flex justify-between items-center mb-8">
+
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold">Connected Accounts</h1>
-          <p className="text-gray-400 text-sm">
-            Manage your connected social platforms
+          <h1 className="text-2xl font-semibold">
+            Connected Accounts
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage your organization's social platform integrations.
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-[#7c5dfa] hover:bg-[#6b4df5] transition px-5 py-2 rounded-lg text-sm font-medium"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Connect New Account
-        </button>
+        <div className="flex gap-3">
+          <button className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg text-sm">
+            <ArrowPathIcon className="w-4 h-4" />
+            Refresh All
+          </button>
+
+          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+            <ShieldCheckIcon className="w-4 h-4" />
+            Audit Security
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-6 mb-10">
-        <StatCard
-          title="Active Connections"
-          value={accounts.filter((a) => a.status === "active").length}
-        />
-        <StatCard
-          title="Expiring Tokens"
-          value={accounts.filter((a) => a.status === "expiring").length}
-        />
-        <StatCard title="Total Accounts" value={accounts.length} />
-        <StatCard title="Pending Auth" value="0" />
+      {/* Summary Cards */}
+      <div className="grid grid-cols-4 gap-6">
+        <SummaryCard title="Healthy" value={healthy} />
+        <SummaryCard title="Alerts" value={alerts} />
+        <SummaryCard title="Total Profiles" value={flattenedTargets.length} />
+        <SummaryCard title="Platforms" value={accounts.length} />
       </div>
 
+      {/* Account Grid */}
       <div className="grid grid-cols-3 gap-6">
-        {accounts.map((account) => {
-          const tokenHealth = calculateTokenHealth(account.token_expires_at);
+        {flattenedTargets.map((target) => {
+          const tokenHealth = calculateTokenHealth(
+            target.parentAccount.token_expires_at
+          );
 
           return (
             <div
-              key={account.id}
-              className="bg-[#15151e] border border-gray-800 rounded-xl p-6"
+              key={target.id}
+              className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-lg capitalize">
-                  {account.provider}
-                </h2>
-
-                <span
-                  className={`text-xs px-3 py-1 rounded-full ${getStatusBadge(
-                    account.status,
-                  )}`}
-                >
-                  {account.status}
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-medium">
+                  {target.display_name}
+                </h3>
+                <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-600">
+                  Active
                 </span>
               </div>
 
-              <p className="text-gray-400 text-sm mb-4">
-                @{account.account_name}
+              <p className="text-xs text-gray-500 mb-4">
+                {target.provider}
               </p>
 
-              <div className="mb-4">
-                <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <div>
+                <div className="flex justify-between text-xs text-gray-500 mb-1">
                   <span>Token Health</span>
                   <span>{tokenHealth}%</span>
                 </div>
-                <div className="w-full bg-gray-800 h-2 rounded-full">
+
+                <div className="w-full bg-gray-200 h-2 rounded-full">
                   <div
-                    className="bg-[#7c5dfa] h-2 rounded-full"
+                    className="bg-blue-600 h-2 rounded-full"
                     style={{ width: `${tokenHealth}%` }}
                   />
                 </div>
+
+                <p className="text-xs text-gray-400 mt-2">
+                  Expires on{" "}
+                  {new Date(
+                    target.parentAccount.token_expires_at
+                  ).toLocaleDateString()}
+                </p>
               </div>
 
-              <div className="flex gap-3">
-                {account.status === "expiring" && (
-                  <button className="flex items-center gap-2 text-yellow-400 text-sm">
-                    <ArrowPathIcon className="w-4 h-4" />
-                    Refresh
-                  </button>
-                )}
-
-                {account.status === "disconnected" && (
-                  <button className="flex items-center gap-2 text-red-400 text-sm">
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                    Reconnect
-                  </button>
-                )}
-
-                <button className="text-gray-400 hover:text-white text-sm">
-                  Manage
+              <div className="flex gap-3 mt-5">
+                <button className="text-sm text-gray-600 hover:text-gray-900">
+                  Refresh
+                </button>
+                <button className="text-sm text-gray-600 hover:text-gray-900">
+                  Settings
+                </button>
+                <button className="text-sm text-red-500 hover:text-red-600">
+                  Disconnect
                 </button>
               </div>
             </div>
           );
         })}
 
-        {accounts.length === 0 && (
-          <div className="col-span-3 text-center text-gray-500">
-            No connected accounts yet.
-          </div>
-        )}
+        {/* Add New Card */}
+        <div
+          onClick={() => setShowModal(true)}
+          className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-600 transition"
+        >
+          <PlusIcon className="w-6 h-6 text-gray-400 mb-3" />
+          <p className="text-sm text-gray-600">
+            Connect New Account
+          </p>
+        </div>
+      </div>
+
+      {/* Help Section */}
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 flex justify-between items-center">
+        <div>
+          <h3 className="font-medium">
+            Need help with integrations?
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Learn how to manage enterprise scopes and troubleshoot authentication errors.
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button className="border border-gray-300 px-4 py-2 rounded-lg text-sm">
+            Integration Guide
+          </button>
+          <button className="border border-gray-300 px-4 py-2 rounded-lg text-sm">
+            API Reference
+          </button>
+          <button className="border border-gray-300 px-4 py-2 rounded-lg text-sm">
+            Contact Support
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value }) {
+function SummaryCard({ title, value }) {
   return (
-    <div className="bg-[#15151e] border border-gray-800 rounded-xl p-5">
-      <p className="text-gray-400 text-sm mb-2">{title}</p>
-      <p className="text-xl font-semibold">{value}</p>
+    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <p className="text-sm text-gray-500">{title}</p>
+      <p className="text-xl font-semibold mt-2">{value}</p>
     </div>
   );
 }

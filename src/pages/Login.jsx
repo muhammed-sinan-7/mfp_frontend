@@ -19,7 +19,6 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       const response = await loginUser(data);
-
       const { access, refresh, org_id, org_name, role } = response.data;
 
       localStorage.setItem("accessToken", access);
@@ -39,181 +38,152 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#0f0f13] text-white font-sans flex flex-col md:flex-row overflow-hidden">
-      {/* --- NEO-FUTURISTIC GRADIENT ELEMENTS --- */}
-      <div className="absolute -top-[1%] -left-[10%] w-[45%] h-[45%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute top-[20%] right-[10%] w-[35%] h-[55%] bg-blue-600/10 rounded-full blur-[130px] pointer-events-none"></div>
-      <div className="absolute -bottom-[5%] left-[15%] w-[40%] h-[30%] bg-[#7c5dfa]/10 rounded-full blur-[100px] pointer-events-none"></div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
 
-      {/* Left Side: Branding & Hero Content */}
-      <div className="relative z-10 w-full md:w-1/2 flex flex-col justify-center px-8 md:px-24 py-12">
-        <div className="flex items-center gap-2 mb-16">
-          <div className="w-8 h-8 bg-[#7c5dfa] rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(124,93,250,0.4)]">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white rotate-45"></div>
           </div>
-          <span className="text-2xl font-bold tracking-tight">MFP</span>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-8">
-          Master the{" "}
-          <span className="bg-gradient-to-r from-[#7c5dfa] to-blue-400 bg-clip-text text-transparent">
-            Social Universe.
-          </span>
-        </h1>
-
-        <p className="text-gray-400 text-lg max-w-md mb-16 leading-relaxed">
-          Connect your accounts, automate your content, and scale your influence
-          with the world's most advanced AI-driven management platform.
-        </p>
-
-        {/* Creator Avatars Section */}
-        <div className="flex items-center gap-4">
-          <div className="flex -space-x-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="w-10 h-10 rounded-full border-2 border-[#0f0f13] bg-gray-800 overflow-hidden"
-              >
-                <img
-                  src={`https://i.pravatar.cc/100?img=${i + 10}`}
-                  alt="user"
-                />
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-gray-400">
-            Joined by <span className="text-white font-bold">12,000+</span>{" "}
-            creators this month
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Sign in to MFP
+          </h2>
+          <p className="text-sm text-gray-500 mt-2">
+            Enter your credentials to access your marketing dashboard
           </p>
         </div>
-      </div>
 
-      {/* Right Side: Login Form */}
-      <div className="relative z-10 w-full md:w-1/2 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md">
-          <div className="bg-[#16161d]/80 backdrop-blur-xl p-10 rounded-3xl border border-gray-800 shadow-2xl">
-            <div className="text-center mb-10">
-              <h2 className="text-4xl font-bold mb-3">Welcome Back</h2>
-              <p className="text-gray-500 text-sm">
-                Enter your credentials to access your workspace
-              </p>
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <EnvelopeIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="email"
+                placeholder="name@company.com"
+                {...register("email")}
+                className="w-full border border-gray-300 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
             </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">
-                  Email Address
-                </label>
-                <div className="relative group">
-                  <EnvelopeIcon className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-[#7c5dfa] transition-colors" />
-                  <input
-                    type="email"
-                    placeholder="name@company.com"
-                    {...register("email")}
-                    className="w-full bg-[#0f0f13] border border-gray-800 rounded-xl py-4 px-12 focus:outline-none focus:border-[#7c5dfa] focus:ring-1 focus:ring-[#7c5dfa]/40 transition-all text-white placeholder-gray-700"
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-red-400 text-xs mt-1">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center px-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                    Password
-                  </label>
-                  <span className="text-[10px] font-bold text-[#7c5dfa] cursor-pointer hover:underline uppercase tracking-widest">
-                    Forgot password?
-                  </span>
-                </div>
-                <div className="relative group">
-                  <LockClosedIcon className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-[#7c5dfa] transition-colors" />
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    {...register("password")}
-                    className="w-full bg-[#0f0f13] border border-gray-800 rounded-xl py-4 px-12 focus:outline-none focus:border-[#7c5dfa] focus:ring-1 focus:ring-[#7c5dfa]/40 transition-all text-white placeholder-gray-700"
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-red-400 text-xs mt-1">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Remember Device Checkbox */}
-              <div className="flex items-center gap-3 py-1">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-gray-800 bg-[#0f0f13] text-[#7c5dfa] focus:ring-[#7c5dfa] focus:ring-offset-0"
-                  id="remember"
-                />
-                <label htmlFor="remember" className="text-xs text-gray-500">
-                  Remember this device for 30 days
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-[#7c5dfa] to-[#6a4df4] hover:brightness-110 disabled:opacity-50 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_10px_20px_rgba(124,93,250,0.2)] active:scale-[0.98]"
-              >
-                {isSubmitting ? "Logging in..." : "Sign In to Dashboard"}
-                {!isSubmitting && <span className="text-xl">→</span>}
-              </button>
-            </form>
-
-            <div className="mt-10 text-center">
-              <p className="text-sm text-gray-500">
-                Don’t have an account yet?{" "}
-                <Link
-                  to="/register"
-                  className="text-[#7c5dfa] font-bold hover:text-[#917afe] transition-colors"
-                >
-                  Create an account
-                </Link>
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.email.message}
               </p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <span className="text-xs text-blue-600 cursor-pointer hover:underline">
+                Forgot password?
+              </span>
             </div>
-
-            {/* Social Trust Icons */}
-            <div className="mt-12 pt-8 border-t border-gray-800/50 text-center">
-              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mb-6">
-                Trusted by growth teams worldwide
+            <div className="relative">
+              <LockClosedIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                placeholder="••••••••"
+                {...register("password")}
+                className="w-full border border-gray-300 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+            </div>
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.password.message}
               </p>
-              <div className="flex justify-center gap-6 text-gray-600">
-                {/* Placeholder circles for the small icons in your screenshot */}
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="w-5 h-5 rounded-full border border-gray-700 flex items-center justify-center text-[8px]"
-                  >
-                    ✓
-                  </div>
-                ))}
-              </div>
+            )}
+          </div>
+
+          {/* Remember */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="remember"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="remember" className="text-sm text-gray-600">
+              Keep me signed in for 30 days
+            </label>
+          </div>
+
+          {/* Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors"
+          >
+            {isSubmitting ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div className="my-8 flex items-center">
+          <div className="flex-grow border-t border-gray-200"></div>
+          <span className="px-3 text-xs text-gray-400 uppercase">
+            OR CONTINUE WITH
+          </span>
+          <div className="flex-grow border-t border-gray-200"></div>
+        </div>
+
+        {/* Social Buttons (UI Only) */}
+        {/* <div className="space-y-3">
+          <button className="w-full border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50">
+            Sign in with LinkedIn
+          </button>
+          <button className="w-full border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50">
+            Sign in with Meta
+          </button>
+          <button className="w-full border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50">
+            Sign in with YouTube
+          </button>
+        </div> */}
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-gray-600">
+          Don’t have an account yet?{" "}
+          <Link
+            to="/register"
+            className="text-blue-600 font-medium hover:underline"
+          >
+            Create an organization
+          </Link>
+        </div>
+
+        {/* Bottom Trust Indicators */}
+        <div className="mt-10 pt-6 border-t border-gray-200 text-center">
+          <div className="text-xs text-gray-400 uppercase mb-4">
+            Systems Operational
+          </div>
+          <div className="flex justify-center gap-8 text-sm text-gray-700">
+            <div>
+              <div className="font-semibold">99.9%</div>
+              <div className="text-xs text-gray-400">Uptime</div>
+            </div>
+            <div>
+              <div className="font-semibold">SOC2</div>
+              <div className="text-xs text-gray-400">Certified</div>
+            </div>
+            <div>
+              <div className="font-semibold">256-bit</div>
+              <div className="text-xs text-gray-400">AES</div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Footer Branding */}
-      <footer className="absolute bottom-8 w-full hidden md:flex justify-between px-12 text-[10px] text-gray-600 font-bold tracking-widest uppercase">
-        <p>© 2024 MFP PLATFORM. ALL RIGHTS RESERVED.</p>
-        <div className="flex gap-8">
-          <span className="cursor-pointer hover:text-gray-400 transition-colors">
-            Privacy Policy
-          </span>
-          <span className="cursor-pointer hover:text-gray-400 transition-colors">
-            Terms of Service
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }

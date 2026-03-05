@@ -3,6 +3,10 @@ import API from "./api";
 export const registerUser = (data) =>
   API.post("auth/register/", data);
 
+
+export const resendOtp = (data) => 
+  API.post("auth/request-email-verification-otp/",data);
+
 export const verifyOtp = (data) =>
   API.post("auth/verify-email-otp/", data);
 

@@ -4,17 +4,24 @@ import Topbar from "../components/layout/Topbar";
 
 function DashboardLayout() {
   return (
-    <div className="h-screen flex bg-[#0f0f13] text-white overflow-hidden">
+    <div className="h-[100dvh] flex bg-gray-50 text-gray-900 overflow-hidden">
+
+      {/* Sidebar */}
       <Sidebar />
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Topbar */}
         <Topbar />
 
-        <div className="flex-1 overflow-hidden flex justify-center">
-          <div className="w-full max-w-[1400px] px-6 py-6">
+        {/* Page Area */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="h-full w-full max-w-[1400px] mx-auto px-6 py-6">
             <Outlet />
           </div>
         </div>
+
       </div>
     </div>
   );
