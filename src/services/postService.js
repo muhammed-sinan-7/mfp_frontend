@@ -9,8 +9,13 @@ export const createPost = (data) => {
 
 
 
-export const getPosts = (page = 1) => {
-  return API.get(`/posts/?page=${page}`);
+export const getPosts = (page = 1, filters = {}) => {
+  const params = new URLSearchParams({
+    page,
+    ...filters
+  });
+
+  return API.get(`/posts/?${params.toString()}`);
 };
 
 

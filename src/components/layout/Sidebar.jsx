@@ -11,22 +11,23 @@ import {
 
 function Sidebar() {
   const navItems = [
-    { name: "Dashboard", icon: HomeIcon, path: "/dashboard" },
-    { name: "Connected Accounts", icon: LinkIcon, path: "/dashboard/accounts" },
-    { name: "Post Management", icon: ClipboardDocumentListIcon, path: "/dashboard/posts" },
-    { name: "Schedule", icon: CalendarIcon, path: "/dashboard/scheduler" },
-    { name: "Team Members", icon: UsersIcon, path: "/dashboard/team" },
-    { name: "Audit Logs", icon: ChartBarIcon, path: "/dashboard/audit" },
-    { name: "Settings", icon: Cog6ToothIcon, path: "/dashboard/settings" },
+    { name: "Dashboard", icon: HomeIcon, path: "/overview" },
+    { name: "Connected Accounts", icon: LinkIcon, path: "/accounts" },
+    {
+      name: "Post Management",
+      icon: ClipboardDocumentListIcon,
+      path: "/posts",
+    },
+    { name: "Schedule", icon: CalendarIcon, path: "/schedule" },
+    { name: "Team Members", icon: UsersIcon, path: "/team" },
+    { name: "Audit Logs", icon: ChartBarIcon, path: "/audit" },
+    { name: "Settings", icon: Cog6ToothIcon, path: "/settings" },
   ];
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between">
-
       <div>
-        <div className="px-6 py-5 text-xl font-semibold text-blue-600">
-          MFP
-        </div>
+        <div className="px-6 py-5 text-xl font-semibold text-blue-600">MFP</div>
 
         <nav className="px-4 space-y-1">
           {navItems.map((item) => (

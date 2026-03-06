@@ -12,65 +12,42 @@ import LandingPage from "./pages/Landing";
 import ConnectedAccounts from "./pages/ConnectedAccounts";
 import AuditLogs from "./pages/AuditLogs";
 import SchedulePage from "./pages/Schedule";
-import CreatePost from "./pages/CreatePost";
+import { Navigate } from "react-router-dom";
 import PostsPage from "./pages/PostManagement";
-{/* <Route path="/dashboard/audit" element={<AuditLogs />} /> */}
+
+
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
+  <Routes>
+    <Route path="/" element={<LandingPage />} />
 
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          }
-        />
-
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
-
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-
-        <Route
-          path="/onboarding"
-          element={
-            <ProtectedRoute>
-              <Onboarding />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-         
-          <Route index element={<Overview />} />
-          <Route path="analytics" element={<div>Analytics</div>} />
-          <Route path="team" element={<div>Team</div>} />
-          <Route path="settings" element={<div>Settings</div>} />
-          <Route path="accounts" element={<ConnectedAccounts />} />
-          <Route path="audit" element={<AuditLogs />} />
-          <Route path="scheduler" element={<SchedulePage />} />
-          <Route path="posts" element={<PostsPage />} />
-          
-        </Route>
-      </Routes>
-    </Router>
+    <Route
+      path="/login"
+      element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      }
+    />
+  <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
+    <Route
+      element={
+        <ProtectedRoute>
+          <DashboardLayout />
+        </ProtectedRoute>
+      }
+    >
+      <Route path="/overview" element={<Overview />} />
+      <Route path="/accounts" element={<ConnectedAccounts />} />
+      <Route path="/posts" element={<PostsPage />} />
+      <Route path="/schedule" element={<SchedulePage />} />
+      <Route path="/team" element={<div>Team</div>} />
+      <Route path="/audit" element={<AuditLogs />} />
+      <Route path="/settings" element={<div>Settings</div>} />
+    </Route>
+  </Routes>
+</Router>
   );
 }
 
