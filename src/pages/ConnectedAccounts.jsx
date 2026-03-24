@@ -4,7 +4,11 @@ import {
   ArrowPathIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
-import { socialList } from "../services/accountService";
+import {
+  socialList,
+  refreshAccount,
+  disconnectAccount,
+} from "../services/accountService";
 import ConnectAccountModal from "../components/connectaccountmodel/ConnectAccountModal";
 
 function ConnectedAccounts() {
@@ -27,6 +31,28 @@ function ConnectedAccounts() {
     fetchAccounts();
   }, []);
 
+  const handleRefresh = async (accountId) => {
+    try {
+      await refreshAccount(accountId);
+      alert("Refresh triggered");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to refresh");
+    }
+  };
+
+  const handleDisconnect = async (accountId) => {
+    try {
+      await disconnectAccount(accountId);
+
+      // update UI
+      setAccounts((prev) => prev.filter((acc) => acc.id !== accountId));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to disconnect");
+    }
+  };
+
   const calculateTokenHealth = (expiresAt) => {
     if (!expiresAt) return 0;
     const now = new Date();
@@ -44,20 +70,19 @@ function ConnectedAccounts() {
     (account.publishing_targets || []).map((target) => ({
       ...target,
       parentAccount: account,
-    }))
+    })),
   );
 
   const healthy = flattenedTargets.filter(
-    (t) => calculateTokenHealth(t.parentAccount.token_expires_at) > 60
+    (t) => calculateTokenHealth(t.parentAccount.token_expires_at) > 60,
   ).length;
 
   const alerts = flattenedTargets.filter(
-    (t) => calculateTokenHealth(t.parentAccount.token_expires_at) < 20
+    (t) => calculateTokenHealth(t.parentAccount.token_expires_at) < 20,
   ).length;
 
   return (
     <div className="space-y-8">
-
       <ConnectAccountModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -66,24 +91,10 @@ function ConnectedAccounts() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-semibold">
-            Connected Accounts
-          </h1>
+          <h1 className="text-2xl font-semibold">Connected Accounts</h1>
           <p className="text-sm text-gray-500 mt-1">
             Manage your organization's social platform integrations.
           </p>
-        </div>
-
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg text-sm">
-            <ArrowPathIcon className="w-4 h-4" />
-            Refresh All
-          </button>
-
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
-            <ShieldCheckIcon className="w-4 h-4" />
-            Audit Security
-          </button>
         </div>
       </div>
 
@@ -99,7 +110,7 @@ function ConnectedAccounts() {
       <div className="grid grid-cols-3 gap-6">
         {flattenedTargets.map((target) => {
           const tokenHealth = calculateTokenHealth(
-            target.parentAccount.token_expires_at
+            target.parentAccount.token_expires_at,
           );
 
           return (
@@ -108,17 +119,13 @@ function ConnectedAccounts() {
               className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
             >
               <div className="flex justify-between items-center mb-3">
-                <h3 className="font-medium">
-                  {target.display_name}
-                </h3>
+                <h3 className="font-medium">{target.display_name}</h3>
                 <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-600">
                   Active
                 </span>
               </div>
 
-              <p className="text-xs text-gray-500 mb-4">
-                {target.provider}
-              </p>
+              <p className="text-xs text-gray-500 mb-4">{target.provider}</p>
 
               <div>
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -136,19 +143,25 @@ function ConnectedAccounts() {
                 <p className="text-xs text-gray-400 mt-2">
                   Expires on{" "}
                   {new Date(
-                    target.parentAccount.token_expires_at
+                    target.parentAccount.token_expires_at,
                   ).toLocaleDateString()}
                 </p>
               </div>
 
               <div className="flex gap-3 mt-5">
-                <button className="text-sm text-gray-600 hover:text-gray-900">
+                <button
+                  onClick={() => handleRefresh(target.parentAccount.id)}
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
                   Refresh
                 </button>
-                <button className="text-sm text-gray-600 hover:text-gray-900">
+                {/* <button className="text-sm text-gray-600 hover:text-gray-900">
                   Settings
-                </button>
-                <button className="text-sm text-red-500 hover:text-red-600">
+                </button> */}
+                <button
+                  onClick={() => handleDisconnect(target.parentAccount.id)}
+                  className="text-sm text-red-500 hover:text-red-600"
+                >
                   Disconnect
                 </button>
               </div>
@@ -162,14 +175,12 @@ function ConnectedAccounts() {
           className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-600 transition"
         >
           <PlusIcon className="w-6 h-6 text-gray-400 mb-3" />
-          <p className="text-sm text-gray-600">
-            Connect New Account
-          </p>
+          <p className="text-sm text-gray-600">Connect New Account</p>
         </div>
       </div>
 
       {/* Help Section */}
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 flex justify-between items-center">
+      {/* <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 flex justify-between items-center">
         <div>
           <h3 className="font-medium">
             Need help with integrations?
@@ -190,7 +201,7 @@ function ConnectedAccounts() {
             Contact Support
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

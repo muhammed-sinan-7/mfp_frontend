@@ -12,6 +12,7 @@ import {
   Hash,
   MapPin,
   Tag,
+  Sparkles,
 } from "lucide-react";
 
 export default function InstagramEditor({
@@ -46,7 +47,7 @@ export default function InstagramEditor({
   const timePart = scheduledTime?.slice(11, 16) || "09:30";
 
   return (
-    <div className="flex  text-[#262626] font-sans">
+    <div className="flex text-[#262626] font-sans relative">
       <div className="w-72 h-100 rounded-xl p-6 border-gray-200 overflow-y-auto shrink-0 bg-white">
         <section className="mb-8">
           <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">
@@ -109,7 +110,18 @@ export default function InstagramEditor({
       </div>
 
       {/* COLUMN 2: EDITOR */}
-      <div className="flex-1 bg-white overflow-y-auto ml-3 rounded-xl px-18 py-10">
+      <div className="flex-1 bg-white overflow-y-auto ml-3 rounded-xl px-18 py-10 relative">
+        {/* NEW AI BUTTON POSITION & STYLE */}
+        <div className="absolute top-8 right-10">
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-ai"))}
+            className="group flex items-center gap-2 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-lg transition-all duration-200 shadow-sm active:scale-95"
+          >
+            <Sparkles size={14} className="text-gray-300 group-hover:text-white" />
+            <span className="text-[12px] font-medium tracking-tight">AI Assistant</span>
+          </button>
+        </div>
+
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <div>
@@ -123,7 +135,7 @@ export default function InstagramEditor({
           </div>
 
           {/* Media Upload Area */}
-          <div className="relative group aspect-square max-w-md  mx-auto mb-5 border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden flex items-center justify-center bg-gray-50 hover:border-blue-300 transition-colors">
+          <div className="relative group aspect-square max-w-md mx-auto mb-5 border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden flex items-center justify-center bg-gray-50 hover:border-blue-300 transition-colors">
             {previewUrls.length > 0 ? (
               <>
                 <img
@@ -184,42 +196,8 @@ export default function InstagramEditor({
                   className="w-full h-32 p-4 text-sm outline-none resize-none"
                   placeholder="Write a caption..."
                 />
-                {/* <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 border-t border-gray-100">
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <Hash size={18} />
-                  </button>
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <Tag size={18} />
-                  </button>
-                </div> */}
               </div>
             </div>
-
-            {/* <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                  <MessageCircle size={16} />
-                </div>
-                <p className="text-xs font-bold">First Comment (Optional)</p>
-              </div>
-              <input
-                type="text"
-                value={firstComment}
-                onChange={(e) => setFirstComment(e.target.value)}
-                placeholder="Add hashtags or extra info..."
-                className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400"
-              />
-            </div> */}
-
-            {/* <div className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <MapPin size={18} className="text-gray-400" />
-                <span className="text-sm text-gray-600">Add Location</span>
-              </div>
-              <span className="text-xs font-bold text-gray-400">
-                San Francisco, CA
-              </span>
-            </div> */}
           </div>
         </div>
       </div>

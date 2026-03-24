@@ -97,7 +97,7 @@ function AuditLogs() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between pb-5 items-center">
         <button
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
@@ -119,21 +119,7 @@ function AuditLogs() {
         </button>
       </div>
 
-      {/* Retention Policy Box */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6 flex justify-between items-center">
-        <div>
-          <h3 className="font-medium">
-            Log Retention Policy
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Audit logs are retained for compliance and security standards.
-          </p>
-        </div>
-
-        <button className="border border-indigo-300 px-4 py-2 rounded-lg text-sm">
-          Update Retention Settings
-        </button>
-      </div>
+     
 
     </div>
   );

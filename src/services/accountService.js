@@ -22,3 +22,9 @@ export const youtubeConnect = async () => {
   const response = await api.get("/social/youtube/connect/");
   return response.data;
 };
+
+export const refreshAccount = (id) =>
+  api.post(`/social/accounts/${id}/refresh/`);
+
+export const disconnectAccount = (id) =>
+  api.post(`/social/accounts/${id}/disconnect/`);
