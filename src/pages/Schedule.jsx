@@ -18,7 +18,7 @@ import AIAssistPanel from "../components/scheduler/AIAssistantPanel";
 export default function SchedulePage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-
+  const [submitting, setSubmitting] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
 
   const [activeTarget, setActiveTarget] = useState(null);
@@ -71,7 +71,13 @@ export default function SchedulePage() {
       new Date(platform.scheduled_time).toISOString().slice(0, 16),
     );
 
-    setSelectedTargets(post.platforms.map((p) => p.publishing_target));
+    const ids = post.platforms.map((p) => Number(p.publishing_target));
+    setSelectedTargets(ids);
+
+    setActiveTarget({
+      id: platform.id,
+      provider: platform.provider,
+    });
 
     setIsDrawerOpen(true);
   }, [location.state]);
@@ -111,8 +117,12 @@ export default function SchedulePage() {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
+
+    setSubmitting(true);
     if (!scheduledTime) {
       toast.warning("Please select a schedule time.");
+      setSubmitting(false);
       return;
     }
 
@@ -121,11 +131,13 @@ export default function SchedulePage() {
 
     if (selectedTime <= now) {
       toast.warning("Schedule time must be in the future.");
+      setSubmitting(false);
       return;
     }
 
     if (selectedTargets.length === 0) {
       toast.warning("Please select at least one platform.");
+      setSubmitting(false);
       return;
     }
 
@@ -141,16 +153,19 @@ export default function SchedulePage() {
 
       if (provider === "instagram" && !hasMedia) {
         toast.warning("Instagram requires at least one image or video.");
+        setSubmitting(false);
         return;
       }
 
       if (!content && !hasMedia) {
         toast.warning("Post must contain text or media.");
+        setSubmitting(false);
         return;
       }
 
       if (provider === "youtube" && !media.video) {
         toast.error("YouTube requires a video file.");
+        setSubmitting(false);
         return;
       }
     }
@@ -187,21 +202,36 @@ export default function SchedulePage() {
               formData.append(`image_${id}_${index}`, file);
             }
           });
-
-      
         });
 
         await createPost(formData);
         toast.success("Post created successfully.");
       } else {
-        const payload = {
-          platforms: editingPost.platforms.map((p) => ({
-            id: p.id,
-            caption: content,
-            scheduled_time: new Date(scheduledTime).toISOString(),
-          })),
-        };
+        const currentPlatform = editingPost.platforms.find(
+          (p) => p.id === activeTarget?.id,
+        );
 
+        if (!currentPlatform) {
+          console.error("Platform not found", {
+            activeTarget,
+            platforms: editingPost.platforms,
+          });
+
+          toast.error("Something went wrong. Platform not matched.");
+          setSubmitting(false);
+          return;
+        }
+
+        const payload = {
+          platforms: [
+            {
+              id: currentPlatform.id,
+              caption: content,
+              scheduled_time: new Date(scheduledTime).toISOString(),
+            },
+          ],
+        };
+        console.log("UPDATE PAYLOAD:", payload);
         await updatePost(editingPost.id, payload);
 
         toast.success("Post updated successfully.");
@@ -233,6 +263,8 @@ export default function SchedulePage() {
       }
 
       toast.error(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -335,15 +367,19 @@ export default function SchedulePage() {
               </button>
 
               <button
+                disabled={submitting}
                 onClick={handleSubmit}
-                className="px-6 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-md"
+                className={`px-6 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-md  ${submitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
               >
-                {editingPost ? "Update Post" : "Publish"}
+                {submitting
+                  ? "Scheduling..."
+                  : editingPost
+                    ? "Update Post"
+                    : "Schedule"}
               </button>
             </div>
           </div>
 
-          {/* ✅ AI PANEL (NO UI CHANGE) */}
           {aiOpen && activeTarget && (
             <AIAssistPanel
               onClose={() => setAiOpen(false)}

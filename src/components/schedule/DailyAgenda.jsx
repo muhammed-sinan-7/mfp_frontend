@@ -43,7 +43,7 @@ export default function DailyAgenda() {
   }, []);
 
   return (
-    <div className="h-full p-6 bg-transparent rounded-xl">
+    <div className="h-full overflow-y-auto p-6 bg-transparent rounded-xl">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-lg font-semibold">Daily Agenda</h2>
         <span className="text-xs text-gray-500">{formatDate}</span>
@@ -73,7 +73,7 @@ export default function DailyAgenda() {
                 >
                   <div className="text-xs text-gray-500">{time}</div>
                   <div className="mt-1 font-medium text-gray-900">
-                    {p.caption || "Untitled Post"}
+                    {p.caption.slice(0,100) || "Untitled Post"}
                   </div>
                   <div className="flex gap-4">
                   <div className="text-xs text-blue-600 mt-1">
