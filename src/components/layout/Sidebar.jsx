@@ -6,9 +6,12 @@ import {
   UsersIcon,
   Cog6ToothIcon,
   LinkIcon,
+  NewspaperIcon,
   ClipboardDocumentListIcon,
+  TrashIcon
 } from "@heroicons/react/24/outline";
 
+import { BarChart3 } from "lucide-react";
 function Sidebar() {
   const navItems = [
     { name: "Dashboard", icon: HomeIcon, path: "/overview" },
@@ -19,8 +22,11 @@ function Sidebar() {
       path: "/posts",
     },
     { name: "Schedule", icon: CalendarIcon, path: "/schedule" },
-    { name: "Team Members", icon: UsersIcon, path: "/team" },
+    // { name: "Team Members", icon: UsersIcon, path: "/team" },
+    { name: "Analytics", icon: BarChart3, path: "/analytics" },
+    { name: "Feeds", icon: NewspaperIcon, path: "/feeds" },
     { name: "Audit Logs", icon: ChartBarIcon, path: "/audit" },
+    { name: "Recycle Bin", icon: TrashIcon, path: "/recycle-bin" },
     { name: "Settings", icon: Cog6ToothIcon, path: "/settings" },
   ];
 

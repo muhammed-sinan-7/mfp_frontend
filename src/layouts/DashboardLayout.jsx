@@ -16,7 +16,7 @@ function DashboardLayout() {
         <Topbar />
 
         {/* Page Area */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="h-full w-full max-w-[1400px] mx-auto px-6 py-6">
             <Outlet />
           </div>

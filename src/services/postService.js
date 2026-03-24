@@ -19,7 +19,6 @@ export const getPosts = (page = 1, filters = {}) => {
 };
 
 
-
 export const getPostDetail = (postId) => {
   return API.get(`/posts/${postId}/`);
 };
@@ -34,11 +33,17 @@ export const deletePost = (postId) => {
   return API.delete(`/posts/${postId}/delete/`);
 };
 
-
 export const restorePost = (postId) => {
   return API.post(`/posts/${postId}/restore/`);
 };
 
+export const permanentlyDeletePost = (postId) => {
+  return API.delete(`/posts/${postId}/permanent-delete/`);
+};
+
+export const emptyRecycleBin = () => {
+  return API.delete("/posts/recycle-bin/empty/");
+};
 
 export const getRecycleBinPosts = () => {
   return API.get("/posts/recycle-bin/");

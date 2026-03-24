@@ -1,9 +1,13 @@
-import { useEffect, useState} from "react";
-import { getPosts, deletePost, restorePost } from "../services/postService";
+import { useEffect, useState } from "react";
+import {
+  getPosts,
+  deletePost,
+  getPostDetail,
+} from "../services/postService";
 import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 const MEDIA_BASE_URL = "/media/";
-
+import { toast } from "sonner"; 
 const platformIcons = {
   linkedin: "https://img.icons8.com/color/24/linkedin.png",
   instagram: "https://img.icons8.com/color/24/instagram-new--v1.png",
@@ -20,7 +24,7 @@ export default function PostsPage() {
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(0);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const pageSize = 10;
   const totalPages = Math.ceil(count / pageSize);
 
@@ -73,6 +77,13 @@ export default function PostsPage() {
       alert("Failed to restore post");
     }
   };
+  const handleView = async (postId) => {
+    try {
+      const res = await getPostDetail(postId);
+
+      setSelectedPost(res.data);
+    } catch (err) {}
+  };
 
   if (loading) {
     return (
@@ -97,14 +108,17 @@ export default function PostsPage() {
           <button className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
             Export CSV
           </button>
-          <button onClick={()=> navigate('/schedule')} className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+          <button
+            onClick={() => navigate("/schedule")}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+          >
             + Create New Post
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
         <StatCard
           title="TOTAL POSTS"
           value={count}
@@ -140,7 +154,7 @@ export default function PostsPage() {
       </div>
 
       {/* Search + Filters (unchanged) */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-3 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <input
           type="text"
           value={search}
@@ -188,9 +202,9 @@ export default function PostsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="grid grid-cols-7 gap-4 px-6 py-3.5 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-          <div>CHANNEL</div>
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="grid grid-cols-7 gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div>PLATFORM</div>
           <div className="col-span-2">CONTENT DETAILS</div>
           <div>PREVIEW</div>
           <div>STATUS</div>
@@ -207,7 +221,7 @@ export default function PostsPage() {
             return (
               <div
                 key={post.id}
-                className="grid grid-cols-7 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors items-center text-sm"
+                className="grid grid-cols-7 gap-4 px-6 py-1 hover:bg-gray-50 transition-colors items-center text-sm"
               >
                 {/* CHANNEL → Logo instead of text */}
                 <div className="flex items-center">
@@ -231,7 +245,7 @@ export default function PostsPage() {
                     {platform.caption?.length > 60 ? "..." : ""}
                   </div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    by {post.author || "Unknown"} • ID: {post.id}
+                    by {post.author || "Unknown"} 
                   </div>
                 </div>
 
@@ -295,7 +309,35 @@ export default function PostsPage() {
                   <span className="text-gray-500">—</span>
                   <div className="flex gap-3 text-sm">
                     <button
-                      onClick={() => setSelectedPost(post)}
+                      onClick={() => {
+                        const platform = post.platforms?.[0];
+
+                        if (!platform) return;
+
+                        // prevent editing non-pending posts
+                        if (platform.publish_status !== "pending") {
+                          toast.error("Only scheduled posts can be edited.");
+                          return;
+                        }
+
+                        const scheduled = new Date(platform.scheduled_time);
+                        const now = new Date();
+
+                        if (scheduled <= now) {
+                          toast.error(
+                            "Past or published posts cannot be edited.",
+                          );
+                          return;
+                        }
+
+                        navigate("/schedule", { state: { editPost: post } });
+                      }}
+                      className="text-indigo-600 hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleView(post.id)}
                       className="text-blue-600 hover:underline"
                     >
                       View
@@ -358,8 +400,6 @@ export default function PostsPage() {
   );
 }
 
-/* ──────────────────────────────────────────────── */
-
 function StatCard({ title, value, change, changeColor }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
@@ -403,6 +443,8 @@ function StatusBadge({ status }) {
 }
 
 function PostDetailDrawer({ post, onClose }) {
+  if (!post) return null;
+
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex justify-end">
       <div className="w-full max-w-md lg:max-w-lg bg-white h-full shadow-2xl overflow-y-auto">
@@ -419,51 +461,102 @@ function PostDetailDrawer({ post, onClose }) {
             </button>
           </div>
 
-          {post.platforms?.map((platform) => (
-            <div
-              key={platform.id}
-              className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50/40"
-            >
-              <div className="font-semibold capitalize mb-1 flex items-center gap-2">
-                {platformIcons[platform.provider?.toLowerCase()] && (
-                  <img
-                    src={platformIcons[platform.provider.toLowerCase()]}
-                    alt={platform.provider}
-                    className="w-5 h-5"
-                  />
-                )}
-                {platform.provider || "Unknown"}
-              </div>
-              <div className="text-sm text-gray-500 mb-3">
-                Status: <StatusBadge status={platform.publish_status} />
-              </div>
-              <div className="text-sm text-gray-800 whitespace-pre-line mb-4">
-                {platform.caption || "No caption"}
-              </div>
+          {/* Post Metadata */}
+          <div className="mb-4 text-sm text-gray-600">
+            <div>Post ID: {post.id}</div>
+            <div>
+              Created:{" "}
+              {post.created_at
+                ? new Date(post.created_at).toLocaleString()
+                : "—"}
+            </div>
+            <div>
+              Updated:{" "}
+              {post.updated_at
+                ? new Date(post.updated_at).toLocaleString()
+                : "—"}
+            </div>
+          </div>
 
-              {platform.media?.map((m) => (
+          {post.platforms?.length ? (
+            post.platforms.map((platform) => {
+              const provider = platform.provider?.toLowerCase();
+
+              return (
                 <div
-                  key={m.id}
-                  className="mb-4 rounded-lg overflow-hidden border border-gray-200"
+                  key={platform.id}
+                  className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50/40"
                 >
-                  {m.media_type === "IMAGE" && (
-                    <img
-                      src={`${MEDIA_BASE_URL}${m.file}`.replace(/\/+/g, "/")}
-                      alt="media"
-                      className="w-full h-auto"
-                    />
+                  <div className="font-semibold capitalize mb-1 flex items-center gap-2">
+                    {provider && platformIcons[provider] && (
+                      <img
+                        src={platformIcons[provider]}
+                        alt={provider}
+                        className="w-5 h-5"
+                      />
+                    )}
+                    {platform.provider || "Unknown"}
+                  </div>
+
+                  <div className="text-sm text-gray-500 mb-2">
+                    Scheduled:{" "}
+                    {platform.scheduled_time
+                      ? new Date(platform.scheduled_time).toLocaleString()
+                      : "—"}
+                  </div>
+
+                  <div className="text-sm text-gray-500 mb-3">
+                    Status: <StatusBadge status={platform.publish_status} />
+                  </div>
+
+                  <div className="text-sm text-gray-800 whitespace-pre-line mb-4">
+                    {platform.caption || "No caption"}
+                  </div>
+
+                  {platform.failure_reason && (
+                    <div className="text-xs text-red-600 mb-2">
+                      Error: {platform.failure_reason}
+                    </div>
                   )}
-                  {m.media_type === "VIDEO" && (
-                    <video
-                      src={`${MEDIA_BASE_URL}${m.file}`.replace(/\/+/g, "/")}
-                      controls
-                      className="w-full h-auto"
-                    />
+
+                  {platform.media?.length ? (
+                    platform.media.map((m) => (
+                      <div
+                        key={m.id}
+                        className="mb-4 rounded-lg overflow-hidden border border-gray-200"
+                      >
+                        {m.media_type === "IMAGE" && (
+                          <img
+                            src={`${MEDIA_BASE_URL}${m.file}`.replace(
+                              /\/+/g,
+                              "/",
+                            )}
+                            alt="media"
+                            className="w-full h-auto"
+                          />
+                        )}
+
+                        {m.media_type === "VIDEO" && (
+                          <video
+                            src={`${MEDIA_BASE_URL}${m.file}`.replace(
+                              /\/+/g,
+                              "/",
+                            )}
+                            controls
+                            className="w-full h-auto"
+                          />
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-xs text-gray-400">No media</div>
                   )}
                 </div>
-              ))}
-            </div>
-          ))}
+              );
+            })
+          ) : (
+            <div className="text-sm text-gray-500">No platform data</div>
+          )}
         </div>
       </div>
     </div>
