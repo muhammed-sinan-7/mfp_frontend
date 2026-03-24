@@ -25,18 +25,19 @@ export default function InstagramEditor({
 }) {
   const [firstComment, setFirstComment] = useState("");
 
-  const media = platformMedia[target?.id] || { image: null };
-  const previewUrl = useMemo(() => {
-    if (!media.image) return null;
-    return URL.createObjectURL(media.image);
-  }, [media.image]);
+  const media = platformMedia[target?.id] || { images: [] };
+  const previewUrls = useMemo(() => {
+    if (!media.images || media.images.length === 0) return [];
+    return media.images.map((file) => URL.createObjectURL(file));
+  }, [media.images]);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files);
+
+    if (files.length > 0) {
       setPlatformMedia((prev) => ({
         ...prev,
-        [target.id]: { image: file },
+        [target.id]: { images: files },
       }));
     }
   };
@@ -119,15 +120,14 @@ export default function InstagramEditor({
                 Craft your perfect visual story with optimized previews.
               </p>
             </div>
-            
           </div>
 
           {/* Media Upload Area */}
           <div className="relative group aspect-square max-w-md  mx-auto mb-5 border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden flex items-center justify-center bg-gray-50 hover:border-blue-300 transition-colors">
-            {previewUrl ? (
+            {previewUrls.length > 0 ? (
               <>
                 <img
-                  src={previewUrl}
+                  src={previewUrls[0]}
                   className="w-full h-full object-cover"
                   alt="Upload"
                 />
@@ -255,9 +255,9 @@ export default function InstagramEditor({
 
             {/* Post Image */}
             <div className="aspect-square bg-gray-100">
-              {previewUrl ? (
+              {previewUrls.length > 0 ? (
                 <img
-                  src={previewUrl}
+                  src={previewUrls[0]}
                   className="w-full h-full object-cover"
                   alt="Preview"
                 />
@@ -294,8 +294,6 @@ export default function InstagramEditor({
             </div>
           </div>
         </div>
-
-        
       </div>
     </div>
   );

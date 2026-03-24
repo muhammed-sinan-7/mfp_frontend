@@ -13,13 +13,11 @@ import PlatformSidebar from "../components/scheduler/platformSidebar";
 import PlatformEditor from "../components/scheduler/PlatformEditor";
 import { useLocation } from "react-router-dom";
 
-
 import AIAssistPanel from "../components/scheduler/AIAssistantPanel";
 
 export default function SchedulePage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-
 
   const [aiOpen, setAiOpen] = useState(false);
 
@@ -38,15 +36,12 @@ export default function SchedulePage() {
 
   const location = useLocation();
 
-
   useEffect(() => {
     const openAI = () => setAiOpen(true);
     window.addEventListener("open-ai", openAI);
 
     return () => window.removeEventListener("open-ai", openAI);
   }, []);
-
-
 
   useEffect(() => {
     if (!location.state?.editPost) return;
@@ -81,8 +76,6 @@ export default function SchedulePage() {
     setIsDrawerOpen(true);
   }, [location.state]);
 
-
-
   useEffect(() => {
     if (!isDrawerOpen) return;
 
@@ -98,8 +91,6 @@ export default function SchedulePage() {
     loadTargets();
   }, [isDrawerOpen]);
 
- 
-
   useEffect(() => {
     if (!isDrawerOpen || !selectedDate) return;
 
@@ -114,14 +105,11 @@ export default function SchedulePage() {
     setScheduledTime(defaultTime.toISOString().slice(0, 16));
   }, [isDrawerOpen, selectedDate]);
 
-
-
   const handlePlatformSelect = (target) => {
     setActiveTarget(target);
     setSelectedTargets([target.id]);
   };
 
- 
   const handleSubmit = async () => {
     if (!scheduledTime) {
       toast.warning("Please select a schedule time.");
@@ -147,10 +135,9 @@ export default function SchedulePage() {
 
       const provider = target.provider;
       const media = platformMedia[id] || {};
-      const files = media.files || [];
+      const files = media.images || [];
 
-      const hasMedia =
-        media.image || media.video || (files && files.length > 0);
+      const hasMedia = media.video || (files && files.length > 0);
 
       if (provider === "instagram" && !hasMedia) {
         toast.warning("Instagram requires at least one image or video.");
@@ -191,7 +178,7 @@ export default function SchedulePage() {
             formData.append(`video_${id}`, media.video);
           }
 
-          media.files?.forEach((file, index) => {
+          media.images?.forEach((file, index) => {
             const isVideo = file.type.startsWith("video");
 
             if (isVideo) {
@@ -201,9 +188,7 @@ export default function SchedulePage() {
             }
           });
 
-          if (media.image) {
-            formData.append(`image_${id}`, media.image);
-          }
+      
         });
 
         await createPost(formData);
@@ -251,8 +236,6 @@ export default function SchedulePage() {
     }
   };
 
-
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -289,7 +272,6 @@ export default function SchedulePage() {
 
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col">
-          
           {/* HEADER */}
           <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-10 shadow-sm">
             <div>
