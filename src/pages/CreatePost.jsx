@@ -3,6 +3,7 @@ import {
   createPost,
   getSocialAccounts,
 } from "../services/postService";
+import { toast } from "sonner";
 
 export default function CreatePost() {
   const [content, setContent] = useState("");
@@ -37,12 +38,12 @@ export default function CreatePost() {
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      alert("Content required");
+      toast.error("Content required");
       return;
     }
 
     if (selectedAccounts.length === 0) {
-      alert("Select at least one platform");
+      toast.error("Select at least one platform");
       return;
     }
 
@@ -57,13 +58,13 @@ export default function CreatePost() {
         social_account_ids: selectedAccounts,
       });
 
-      alert("Post created successfully");
+      toast.success("Post created successfully");
 
       setContent("");
       setScheduledTime("");
       setSelectedAccounts([]);
     } catch (err) {
-      alert("Failed to create post");
+      toast.error("Failed to create post");
     } finally {
       setLoading(false);
     }

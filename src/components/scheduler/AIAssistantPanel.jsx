@@ -1,14 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
+import { Sparkles, X, Send, Wand2 } from "lucide-react";
 import { aiService } from "../../services/aiService";
 import { getPlatformTone } from "../../services/aiHelper";
 
-export default function AIAssistPanel({
-  onClose,
-  content,
-  setContent,
-  platform,
-  isOpen, // ✅ REQUIRED
-}) {
+export default function AIAssistPanel({ onClose, content, setContent, platform }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
@@ -17,39 +12,23 @@ export default function AIAssistPanel({
 
   const tone = getPlatformTone(platform);
   const audience = "general audience";
-
   const storageKey = `ai_chat_${platform}`;
 
   useEffect(() => {
-    console.log("LOADING HISTORY FROM STORAGE...");
-
     try {
       const saved = sessionStorage.getItem(storageKey);
-
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        console.log("RESTORED:", parsed);
-        setHistory(parsed);
-      } else {
-        setHistory([]);
-      }
-    } catch (err) {
-      console.error("PARSE ERROR", err);
+      setHistory(saved ? JSON.parse(saved) : []);
+    } catch {
       setHistory([]);
     }
-
     setIsHydrated(true);
   }, [storageKey]);
 
   useEffect(() => {
     if (!isHydrated) return;
-
-    console.log("SAVING HISTORY:", history);
-
     sessionStorage.setItem(storageKey, JSON.stringify(history));
   }, [history, storageKey, isHydrated]);
 
-  // ✅ Auto scroll
   useEffect(() => {
     chatRef.current?.scrollTo({
       top: chatRef.current.scrollHeight,
@@ -57,13 +36,11 @@ export default function AIAssistPanel({
     });
   }, [history, loading]);
 
-  // ⚠️ Optional: sync editor → last AI message (safe version)
   useEffect(() => {
     if (!content) return;
 
     setHistory((prev) => {
       if (!prev.length) return prev;
-
       const last = prev[prev.length - 1];
       if (last.role !== "assistant") return prev;
 
@@ -81,13 +58,9 @@ export default function AIAssistPanel({
   }, [content]);
 
   const handleGenerate = async () => {
-    if (!input || loading) return;
+    if (!input.trim() || loading) return;
 
-    const userMessage = {
-      role: "user",
-      content: input,
-    };
-
+    const userMessage = { role: "user", content: input.trim() };
     const updatedHistory = [...history, userMessage];
 
     setHistory(updatedHistory);
@@ -102,25 +75,47 @@ export default function AIAssistPanel({
         audience,
       });
 
-      const data = res?.data || res || {};
+      const payload = res?.data || res || {};
+
+      let parsedData = payload;
+      if (typeof payload === "string") {
+        try {
+          parsedData = JSON.parse(payload);
+        } catch {
+          parsedData = { caption: payload };
+        }
+      }
 
       const safeData = {
-        hook: data.hook || "",
-        caption: data.caption || "",
-        hashtags: Array.isArray(data.hashtags) ? data.hashtags : [],
-        format: data.format || "post",
+        hook: String(parsedData?.hook || "").trim(),
+        caption: String(parsedData?.caption || "").trim(),
+        hashtags: Array.isArray(parsedData?.hashtags)
+          ? parsedData.hashtags.filter((h) => typeof h === "string" && h.trim())
+          : [],
+        format: parsedData?.format || "post",
       };
+
+      if (!safeData.caption && safeData.hook) {
+        safeData.caption = safeData.hook;
+      }
+
+      if (!safeData.caption && safeData.hashtags.length) {
+        safeData.caption = `Suggested hashtags: ${safeData.hashtags.join(" ")}`;
+      }
+
+      if (!safeData.caption) {
+        safeData.caption =
+          "I can help with hooks, captions, hashtags, and rewrites. Try asking for a full caption with tone.";
+      }
 
       const assistantMessage = {
         role: "assistant",
-        content: JSON.stringify(safeData),
+        content: safeData.caption,
         parsed: safeData,
       };
 
       setHistory((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      console.error("AI ERROR:", err);
-
+    } catch {
       setHistory((prev) => [
         ...prev,
         {
@@ -128,88 +123,84 @@ export default function AIAssistPanel({
           content: "error",
           parsed: {
             hook: "",
-            caption: "⚠️ Failed to generate. Try again.",
+            caption: "Failed to generate content. Please try again.",
             hashtags: [],
           },
         },
       ]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="fixed bottom-40  right-4 w-[400px] h-[600px] bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden ring-1 ring-black/5">
-      {/* Header - Stays at Top */}
-      <div className="flex justify-between items-center px-5 py-4 bg-white border-b border-slate-100 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-          <h3 className="text-[13px] font-bold text-slate-800 tracking-tight uppercase">
-            AI Content Assistant
-          </h3>
+    <div className="fixed top-24 right-8 bottom-24 w-[420px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col ring-1 ring-black/5">
+      <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+            <Wand2 size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">AI Assistant</h3>
+            <p className="text-xs text-slate-500 capitalize">{platform} • {tone} tone</p>
+          </div>
         </div>
+
         <button
           onClick={onClose}
-          className="p-1 hover:bg-slate-100 rounded-md transition-colors text-slate-400"
+          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition"
+          aria-label="Close AI panel"
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <X size={14} className="mx-auto" />
         </button>
       </div>
 
-      {/* Chat History - Fixed Scroll Area */}
-      <div
-        ref={chatRef}
-        className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50/30 scroll-smooth"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {history.length === 0 && !loading && (
-          <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
-            <span className="text-2xl mb-2">✍️</span>
-            <p className="text-sm font-medium text-slate-500">
-              Ready to draft for {platform}
+      <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-slate-50/40">
+        {!history.length && !loading && (
+          <div className="h-full flex flex-col items-center justify-center text-center px-6">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-3">
+              <Sparkles size={18} />
+            </div>
+            <p className="text-sm font-medium text-slate-700">Ready to assist</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Ask for hooks, captions, hashtags, or rewriting suggestions.
             </p>
           </div>
         )}
 
         {history.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+          <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
-              className={`max-w-[85%] px-4 py-3 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
+              className={`max-w-[88%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed shadow-sm ${
                 msg.role === "user"
-                  ? "bg-blue-600 text-white rounded-tr-none"
-                  : "bg-white border border-slate-200 text-slate-700 rounded-tl-none"
+                  ? "bg-blue-600 text-white rounded-br-md"
+                  : "bg-white border border-slate-200 text-slate-700 rounded-bl-md"
               }`}
             >
               {msg.role === "assistant" ? (
                 <div className="space-y-3">
-                  {msg.parsed?.hook && (
-                    <p className="font-bold text-blue-600 text-[11px] uppercase tracking-widest italic">
-                      "{msg.parsed.hook}"
+                  {msg.parsed?.hook ? (
+                    <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wide">
+                      {msg.parsed.hook}
                     </p>
-                  )}
-                  <p className="whitespace-pre-line">
-                    {msg.parsed?.caption || msg.content}
-                  </p>
-                  {msg.role === "assistant" && msg.parsed?.caption && (
+                  ) : null}
+
+                  <p className="whitespace-pre-line">{msg.parsed?.caption || msg.content}</p>
+
+                  {msg.parsed?.hashtags?.length ? (
+                    <p className="text-[11px] text-slate-500">
+                      {msg.parsed.hashtags.map((h) => (h.startsWith("#") ? h : `#${h}`)).join(" ")}
+                    </p>
+                  ) : null}
+
+                  {msg.parsed?.caption ? (
                     <button
-                      onClick={() => setContent(msg.parsed.caption)}
-                      className="w-full mt-2 py-2 bg-slate-900 text-white rounded-lg font-semibold text-[11px] hover:bg-blue-600 transition-all active:scale-95"
+                      onClick={() => setContent(msg.parsed.caption || msg.parsed.hook || "")}
+                      className="w-full py-2 rounded-lg bg-slate-900 text-white text-[11px] font-semibold hover:bg-blue-600 transition"
                     >
                       Apply to Editor
                     </button>
-                  )}
+                  ) : null}
                 </div>
               ) : (
                 msg.content
@@ -219,25 +210,24 @@ export default function AIAssistPanel({
         ))}
 
         {loading && (
-          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold uppercase tracking-widest pl-2">
-            <span className="flex gap-1">
-              <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" />
-              <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-              <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="inline-flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" />
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce [animation-delay:0.15s]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce [animation-delay:0.3s]" />
             </span>
-            Thinking...
+            Generating...
           </div>
         )}
       </div>
 
-      {/* Input Section - Stays at Bottom */}
-      <div className="p-4 bg-white border-t border-slate-100 flex-shrink-0">
-        <div className="relative border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all bg-slate-50">
+      <div className="px-4 py-3 border-t border-slate-100 bg-white">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask AI to write or edit..."
-            className="w-full h-16  border-gray-300 rounded p-2 text-xs mb-2 resize-none outline-none focus:outline-none focus:ring-0 focus:border-blue-500"
+            placeholder="Ask AI to write, improve, or shorten your content..."
+            className="w-full h-20 bg-transparent px-3 py-2 text-sm text-slate-700 resize-none outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -245,16 +235,16 @@ export default function AIAssistPanel({
               }
             }}
           />
-          <div className="flex justify-between items-center p-2 border-t border-slate-100">
-            <span className="text-[10px] text-slate-400 font-medium ml-1">
-              Shift + Enter for new line
-            </span>
+
+          <div className="px-3 py-2 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] text-slate-400">Shift + Enter for new line</span>
             <button
               onClick={handleGenerate}
               disabled={loading || !input.trim()}
-              className="px-4 py-1.5 bg-blue-600 text-white text-[12px] font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
             >
-              {loading ? "..." : "Send"}
+              <Send size={12} />
+              Send
             </button>
           </div>
         </div>

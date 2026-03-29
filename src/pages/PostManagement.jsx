@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
   getPosts,
   deletePost,
@@ -6,7 +6,8 @@ import {
 } from "../services/postService";
 import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-const MEDIA_BASE_URL = "/media/";
+// S3 already returns full https:// URLs â€” no prefix needed
+
 import { toast } from "sonner"; 
 const platformIcons = {
   linkedin: "https://img.icons8.com/color/24/linkedin.png",
@@ -18,6 +19,7 @@ const platformIcons = {
 export default function PostsPage() {
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [postToDelete, setPostToDelete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [platform, setPlatform] = useState("");
@@ -60,21 +62,22 @@ export default function PostsPage() {
   }, [search, platform, status]);
 
   const handleDelete = async (postId) => {
-    if (!window.confirm("Move post to recycle bin?")) return;
     try {
       await deletePost(postId);
+      toast.success("Post moved to recycle bin.");
       loadPosts(page);
     } catch {
-      alert("Failed to delete post");
+      toast.error("Failed to delete post.");
     }
   };
 
   const handleRestore = async (postId) => {
     try {
       await restorePost(postId);
+      toast.success("Post restored successfully.");
       loadPosts(page);
     } catch {
-      alert("Failed to restore post");
+      toast.error("Failed to restore post.");
     }
   };
   const handleView = async (postId) => {
@@ -94,11 +97,11 @@ export default function PostsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Post Management</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Post Management</h1>
           <p className="text-sm text-gray-600 mt-1">
             Plan, review, and analyze your multi-channel marketing content.
           </p>
@@ -202,168 +205,164 @@ export default function PostsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="grid grid-cols-7 gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-          <div>PLATFORM</div>
-          <div className="col-span-2">CONTENT DETAILS</div>
-          <div>PREVIEW</div>
-          <div>STATUS</div>
-          <div>SCHEDULE</div>
-          <div>ENGAGEMENT</div>
-        </div>
+      <div className="bg-white border border-blue-100 rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-blue-50/60 border-b border-blue-100">
+              <tr className="text-xs font-semibold text-blue-900/70 uppercase tracking-wide">
+                <th className="text-left px-5 py-3">Platform</th>
+                <th className="text-left px-5 py-3 min-w-[280px]">Content</th>
+                <th className="text-left px-5 py-3">Preview</th>
+                <th className="text-left px-5 py-3">Status</th>
+                <th className="text-left px-5 py-3 min-w-[180px]">Schedule</th>
+                <th className="text-left px-5 py-3 min-w-[200px]">Actions</th>
+              </tr>
+            </thead>
 
-        <div className="divide-y divide-gray-200">
-          {posts.map((post) => {
-            const platform = post.platforms?.[0] || {};
-            const media = platform.media?.[0];
-            const provider = platform.provider?.toLowerCase() || "";
+            <tbody className="divide-y divide-blue-50">
+              {posts.map((post) => {
+                const platform = post.platforms?.[0] || {};
+                const media = platform.media?.[0];
+                const provider = platform.provider?.toLowerCase() || "";
 
-            return (
-              <div
-                key={post.id}
-                className="grid grid-cols-7 gap-4 px-6 py-1 hover:bg-gray-50 transition-colors items-center text-sm"
-              >
-                {/* CHANNEL → Logo instead of text */}
-                <div className="flex items-center">
-                  {platformIcons[provider] ? (
-                    <img
-                      src={platformIcons[provider]}
-                      alt={provider}
-                      className="w-6 h-6 object-contain"
-                    />
-                  ) : (
-                    <span className="text-gray-500 capitalize">
-                      {provider || "—"}
-                    </span>
-                  )}
-                </div>
-
-                {/* Content Details */}
-                <div className="col-span-2">
-                  <div className="font-medium text-gray-900">
-                    {platform.caption?.slice(0, 60) || "Untitled Post"}
-                    {platform.caption?.length > 60 ? "..." : ""}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    by {post.author || "Unknown"} 
-                  </div>
-                </div>
-
-                {/* Preview – with MEDIA_BASE_URL fix */}
-                <div className="flex items-center">
-                  {media?.file ? (
-                    media.media_type === "IMAGE" ? (
-                      <img
-                        src={`${MEDIA_BASE_URL}${media.file}`.replace(
-                          /\/+/g,
-                          "/",
+                return (
+                  <tr key={post.id} className="hover:bg-blue-50/30 transition-colors">
+                    <td className="px-5 py-4 align-middle">
+                      <div className="flex items-center">
+                        {platformIcons[provider] ? (
+                          <img
+                            src={platformIcons[provider]}
+                            alt={provider}
+                            className="w-6 h-6 object-contain"
+                          />
+                        ) : (
+                          <span className="text-gray-500 capitalize">
+                            {provider || "-"}
+                          </span>
                         )}
-                        alt="preview"
-                        className="w-16 h-12 object-cover rounded border border-gray-200"
-                        onError={(e) => {
-                          e.target.src =
-                            "https://via.placeholder.com/64x48?text=Img+Error";
-                        }}
-                      />
-                    ) : media.media_type === "VIDEO" ? (
-                      <video
-                        src={`${MEDIA_BASE_URL}${media.file}`.replace(
-                          /\/+/g,
-                          "/",
+                      </div>
+                    </td>
+
+                    <td className="px-5 py-4 align-middle">
+                      <p className="font-medium text-gray-900 leading-snug">
+                        {platform.caption?.slice(0, 80) || "Untitled Post"}
+                        {platform.caption?.length > 80 ? "..." : ""}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        by {post.author || "Unknown"}
+                      </p>
+                    </td>
+
+                    <td className="px-5 py-4 align-middle">
+                      {media?.file ? (
+                        media.media_type === "IMAGE" ? (
+                          <img
+                            src={media.file}
+                            alt="preview"
+                            className="w-20 h-12 object-cover rounded-lg border border-blue-100"
+                            onError={(e) => {
+                              e.target.src =
+                                "https://via.placeholder.com/80x48?text=Image";
+                            }}
+                          />
+                        ) : media.media_type === "VIDEO" ? (
+                          <video
+                            src={media.file}
+                            className="w-20 h-12 object-cover rounded-lg border border-blue-100"
+                            muted
+                          />
+                        ) : null
+                      ) : (
+                        <div className="w-20 h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500">
+                          No media
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="px-5 py-4 align-middle">
+                      <StatusBadge status={platform.publish_status} />
+                    </td>
+
+                    <td className="px-5 py-4 align-middle text-gray-700 text-sm">
+                      {platform.scheduled_time
+                        ? new Date(platform.scheduled_time).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-"}
+                    </td>
+
+                    <td className="px-5 py-4 align-middle">
+                      <div className="flex items-center gap-3 text-sm">
+                        <button
+                          onClick={() => {
+                            const platform = post.platforms?.[0];
+                            if (!platform) return;
+
+                            if (platform.publish_status !== "pending") {
+                              toast.error("Only scheduled posts can be edited.");
+                              return;
+                            }
+
+                            const scheduled = new Date(platform.scheduled_time);
+                            const now = new Date();
+
+                            if (scheduled <= now) {
+                              toast.error(
+                                "Past or published posts cannot be edited.",
+                              );
+                              return;
+                            }
+
+                            navigate("/schedule", { state: { editPost: post } });
+                          }}
+                          className="text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleView(post.id)}
+                          className="text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          View
+                        </button>
+                        {!post.is_deleted ? (
+                          <button
+                            onClick={() => setPostToDelete(post.id)}
+                            className="text-red-600 hover:text-red-800 font-medium"
+                          >
+                            Delete
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleRestore(post.id)}
+                            className="text-green-600 hover:text-green-800 font-medium"
+                          >
+                            Restore
+                          </button>
                         )}
-                        className="w-16 h-12 object-cover rounded"
-                        muted
-                        onError={(e) => {
-                          e.target.outerHTML =
-                            '<div class="w-16 h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">Video</div>';
-                        }}
-                      />
-                    ) : null
-                  ) : (
-                    <div className="w-16 h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-500">
-                      No media
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
 
-                {/* Status – updated colors */}
-                <div>
-                  <StatusBadge status={platform.publish_status} />
-                </div>
-
-                {/* Schedule */}
-                <div className="text-gray-700">
-                  {platform.scheduled_time
-                    ? new Date(platform.scheduled_time).toLocaleString([], {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "—"}
-                </div>
-
-                {/* Engagement + Actions */}
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">—</span>
-                  <div className="flex gap-3 text-sm">
-                    <button
-                      onClick={() => {
-                        const platform = post.platforms?.[0];
-
-                        if (!platform) return;
-
-                        // prevent editing non-pending posts
-                        if (platform.publish_status !== "pending") {
-                          toast.error("Only scheduled posts can be edited.");
-                          return;
-                        }
-
-                        const scheduled = new Date(platform.scheduled_time);
-                        const now = new Date();
-
-                        if (scheduled <= now) {
-                          toast.error(
-                            "Past or published posts cannot be edited.",
-                          );
-                          return;
-                        }
-
-                        navigate("/schedule", { state: { editPost: post } });
-                      }}
-                      className="text-indigo-600 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleView(post.id)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      View
-                    </button>
-                    {!post.is_deleted ? (
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        className="text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleRestore(post.id)}
-                        className="text-green-600 hover:underline"
-                      >
-                        Restore
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+              {!posts.length && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-14 text-center">
+                    <p className="text-sm font-medium text-gray-600">No posts found</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Try adjusting your filters or search query.
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
         {/* Pagination (unchanged) */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-t border-gray-200 bg-white text-sm text-gray-600">
           <p>
@@ -396,6 +395,19 @@ export default function PostsPage() {
           onClose={() => setSelectedPost(null)}
         />
       )}
+
+      <ConfirmActionModal
+        isOpen={Boolean(postToDelete)}
+        title="Delete Post?"
+        description="This will move the post to recycle bin. You can restore it later."
+        confirmLabel="Move to Recycle Bin"
+        onClose={() => setPostToDelete(null)}
+        onConfirm={async () => {
+          if (!postToDelete) return;
+          await handleDelete(postToDelete);
+          setPostToDelete(null);
+        }}
+      />
     </div>
   );
 }
@@ -445,120 +457,176 @@ function StatusBadge({ status }) {
 function PostDetailDrawer({ post, onClose }) {
   if (!post) return null;
 
+  const formatDateTime = (value) => {
+    if (!value) return "Not scheduled";
+    return new Date(value).toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/30 flex justify-end">
-      <div className="w-full max-w-md lg:max-w-lg bg-white h-full shadow-2xl overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Post Details
-            </h2>
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex justify-end">
+      <div className="w-full max-w-md lg:max-w-xl bg-gradient-to-b from-slate-50 to-white h-full shadow-2xl overflow-y-auto border-l border-slate-200">
+        <div className="p-6 lg:p-7">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+                Post Preview
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">Key details only</p>
+            </div>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
+              className="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 text-xl leading-none"
+              aria-label="Close drawer"
             >
-              ×
+              x
             </button>
-          </div>
-
-          {/* Post Metadata */}
-          <div className="mb-4 text-sm text-gray-600">
-            <div>Post ID: {post.id}</div>
-            <div>
-              Created:{" "}
-              {post.created_at
-                ? new Date(post.created_at).toLocaleString()
-                : "—"}
-            </div>
-            <div>
-              Updated:{" "}
-              {post.updated_at
-                ? new Date(post.updated_at).toLocaleString()
-                : "—"}
-            </div>
           </div>
 
           {post.platforms?.length ? (
             post.platforms.map((platform) => {
               const provider = platform.provider?.toLowerCase();
+              const mediaCount = platform.media?.length || 0;
 
               return (
                 <div
                   key={platform.id}
-                  className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50/40"
+                  className="mb-5 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"
                 >
-                  <div className="font-semibold capitalize mb-1 flex items-center gap-2">
-                    {provider && platformIcons[provider] && (
-                      <img
-                        src={platformIcons[provider]}
-                        alt={provider}
-                        className="w-5 h-5"
-                      />
-                    )}
-                    {platform.provider || "Unknown"}
-                  </div>
-
-                  <div className="text-sm text-gray-500 mb-2">
-                    Scheduled:{" "}
-                    {platform.scheduled_time
-                      ? new Date(platform.scheduled_time).toLocaleString()
-                      : "—"}
-                  </div>
-
-                  <div className="text-sm text-gray-500 mb-3">
-                    Status: <StatusBadge status={platform.publish_status} />
-                  </div>
-
-                  <div className="text-sm text-gray-800 whitespace-pre-line mb-4">
-                    {platform.caption || "No caption"}
-                  </div>
-
-                  {platform.failure_reason && (
-                    <div className="text-xs text-red-600 mb-2">
-                      Error: {platform.failure_reason}
-                    </div>
-                  )}
-
-                  {platform.media?.length ? (
-                    platform.media.map((m) => (
-                      <div
-                        key={m.id}
-                        className="mb-4 rounded-lg overflow-hidden border border-gray-200"
-                      >
-                        {m.media_type === "IMAGE" && (
+                  <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/60">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold capitalize text-slate-900 flex items-center gap-2">
+                        {provider && platformIcons[provider] && (
                           <img
-                            src={`${MEDIA_BASE_URL}${m.file}`.replace(
-                              /\/+/g,
-                              "/",
-                            )}
-                            alt="media"
-                            className="w-full h-auto"
+                            src={platformIcons[provider]}
+                            alt={provider}
+                            className="w-5 h-5"
                           />
                         )}
-
-                        {m.media_type === "VIDEO" && (
-                          <video
-                            src={`${MEDIA_BASE_URL}${m.file}`.replace(
-                              /\/+/g,
-                              "/",
-                            )}
-                            controls
-                            className="w-full h-auto"
-                          />
-                        )}
+                        {platform.provider || "Unknown"}
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-xs text-gray-400">No media</div>
-                  )}
+                      <StatusBadge status={platform.publish_status || "draft"} />
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-slate-500">Scheduled</p>
+                        <p className="text-slate-800 mt-0.5 font-medium">
+                          {formatDateTime(platform.scheduled_time)}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-slate-500">Media</p>
+                        <p className="text-slate-800 mt-0.5 font-medium">
+                          {mediaCount} file{mediaCount === 1 ? "" : "s"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5">
+                    <div className="mb-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">
+                        Caption
+                      </p>
+                      <p className="text-sm text-slate-800 whitespace-pre-line leading-relaxed">
+                        {platform.caption || "No caption added."}
+                      </p>
+                    </div>
+
+                    {platform.failure_reason && (
+                      <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <p className="text-xs font-medium text-red-700 mb-1">
+                          Publish Issue
+                        </p>
+                        <p className="text-xs text-red-700">{platform.failure_reason}</p>
+                      </div>
+                    )}
+
+                    {platform.media?.length ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        {platform.media.map((m) => (
+                          <div
+                            key={m.id}
+                            className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50"
+                          >
+                            {m.media_type === "IMAGE" && (
+                              <img
+                                src={m.file}
+                                alt="media"
+                                className="w-full h-32 object-cover"
+                              />
+                            )}
+
+                            {m.media_type === "VIDEO" && (
+                              <video
+                                src={m.file}
+                                controls
+                                className="w-full h-32 object-cover"
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-xs text-slate-500 text-center">
+                        No media files attached.
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })
           ) : (
-            <div className="text-sm text-gray-500">No platform data</div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
+              No platform data available.
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
+
+function ConfirmActionModal({
+  isOpen,
+  title,
+  description,
+  confirmLabel,
+  onClose,
+  onConfirm,
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+          <p className="mt-2 text-sm text-slate-600">{description}</p>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+

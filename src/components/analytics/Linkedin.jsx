@@ -1,15 +1,18 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Users,
   Eye,
   BarChart3,
   MousePointer2,
   Share2,
-  Filter,
   ChevronRight,
   MoreHorizontal,
   ArrowUpRight,
+  Image as ImageIcon,
 } from "lucide-react";
+import { exportRowsToCsv } from "../../services/csvExport";
 import {
   LineChart,
   Line,
@@ -20,11 +23,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const LinkedInAnalytics = ({ overview, growth, posts }) => {
-  const hasData =
-    overview?.post_impressions > 0 ||
-    (growth && growth.length > 0) ||
-    (posts && posts.length > 0);
+const LinkedInAnalytics = ({ overview, growth, posts, onRefresh }) => {
+  const navigate = useNavigate();
+  const hasGrowthMetrics = (growth || []).length > 0;
+  const hasPostMetrics = (posts || []).length > 0;
+  const hasData = Boolean(overview) || hasGrowthMetrics || hasPostMetrics;
   // Mock data for the "Top Professional Functions" chart as per the image
   const professionalFunctions = [
     { role: "Engineering", width: "95%", color: "bg-[#7C3AED]" },
@@ -69,10 +72,48 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
       isNegative: true,
     },
   ];
+
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+
+    try {
+      await onRefresh();
+      toast.success("LinkedIn analytics refreshed.");
+    } catch {
+      toast.error("Failed to refresh LinkedIn analytics.");
+    }
+  };
+
+  const handleExport = () => {
+    const rows = (posts || []).map((post) => ({
+      title: post.title || "Untitled",
+      type: post.type || "",
+      impressions: Number(post.impressions || 0),
+      clicks: Number(post.clicks || 0),
+      ctr: Number(post.ctr || 0),
+      status: post.status || "",
+    }));
+
+    const exported = exportRowsToCsv("linkedin-post-analytics.csv", rows);
+    if (exported) {
+      toast.success("LinkedIn analytics CSV downloaded.");
+    } else {
+      toast.info("No LinkedIn post metrics available to export.");
+    }
+  };
+
+  const handleOpenPost = (post) => {
+    const postUrl = post?.url || post?.permalink || post?.post_url;
+    if (!postUrl) {
+      toast.info("No public URL is available for this post yet.");
+      return;
+    }
+    window.open(postUrl, "_blank", "noopener,noreferrer");
+  };
   if (!hasData) {
     return (
-      <div className="w-full bg-[#F9FAFB] pb-100 min-h-screen flex items-center justify-center">
-        <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center shadow-sm max-w-md">
+      <div className="w-full flex items-center justify-center py-16">
+        <div className="bg-white border border-blue-100 rounded-2xl p-10 text-center shadow-sm max-w-lg">
           <h2 className="text-lg font-bold text-gray-900 mb-2">
             LinkedIn Analytics Unavailable
           </h2>
@@ -81,7 +122,6 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
             and scheduling are supported, but engagement analytics require
             additional LinkedIn permissions.
           </p>
-
           <div className="mt-6 text-xs text-gray-400">
             Once LinkedIn grants analytics access, insights will appear here.
           </div>
@@ -91,12 +131,12 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
   }
 
   return (
-    <div className="w-full bg-[#F9FAFB] min-h-screen  font-sans text-gray-900">
-      <div className="max-w-[1200px] mx-auto">
+    <div className="w-full font-sans text-gray-900">
+      <div>
         {/* Header Section */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-semibold text-gray-900">
               LinkedIn Insights
             </h1>
             <p className="text-gray-400 text-sm pt-1 font-small">
@@ -104,10 +144,16 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
             </p>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm"
+            >
               <Share2 size={14} /> Export PDF
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-md shadow-violet-100 hover:bg-[#6D28D9] transition-all">
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-4 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-md shadow-violet-100 hover:bg-[#6D28D9] transition-all"
+            >
               Adjust Filters
             </button>
           </div>
@@ -161,40 +207,46 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
               </div>
             </div>
             <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={growth}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#F3F4F6"
-                  />
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                    dy={10}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                  />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="impressions"
-                    stroke="#7C3AED"
-                    strokeWidth={3}
-                    dot={{
-                      r: 4,
-                      fill: "#7C3AED",
-                      strokeWidth: 2,
-                      stroke: "#fff",
-                    }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {hasGrowthMetrics ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={growth}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#F3F4F6"
+                    />
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                    />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="impressions"
+                      stroke="#7C3AED"
+                      strokeWidth={3}
+                      dot={{
+                        r: 4,
+                        fill: "#7C3AED",
+                        strokeWidth: 2,
+                        stroke: "#fff",
+                      }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full rounded-xl border border-blue-100 bg-white flex items-center justify-center text-sm text-slate-500">
+                  No growth metrics found.
+                </div>
+              )}
             </div>
           </div>
 
@@ -250,7 +302,10 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
                 Deep dive into individual content performance metrics.
               </p>
             </div>
-            <button className="text-violet-600 text-xs font-bold flex items-center gap-1 hover:underline">
+            <button
+              onClick={() => navigate("/posts")}
+              className="text-violet-600 text-xs font-bold flex items-center gap-1 hover:underline"
+            >
               View All Posts <ChevronRight size={14} />
             </button>
           </div>
@@ -268,13 +323,32 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {posts?.map((post, i) => (
+                {hasPostMetrics && posts?.map((post, i) => (
                   <tr
                     key={i}
                     className="hover:bg-gray-50/30 transition-colors group"
                   >
                     <td className="px-8 py-5 text-sm font-bold text-gray-900 max-w-xs truncate">
-                      {post.title}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-8 rounded bg-gray-100 overflow-hidden flex items-center justify-center">
+                          {post.thumbnail && post.media_type === "VIDEO" ? (
+                            <video
+                              src={post.thumbnail}
+                              className="w-full h-full object-cover"
+                              muted
+                            />
+                          ) : post.thumbnail ? (
+                            <img
+                              src={post.thumbnail}
+                              alt={post.title || "post media"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon size={12} className="text-gray-400" />
+                          )}
+                        </div>
+                        <span className="truncate">{post.title}</span>
+                      </div>
                     </td>
                     <td className="px-8 py-5">
                       <span className="text-[10px] font-bold px-2 py-1 rounded-md bg-gray-50 text-gray-500 border border-gray-100 capitalize">
@@ -302,12 +376,25 @@ const LinkedInAnalytics = ({ overview, growth, posts }) => {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-center">
-                      <button className="text-gray-300 group-hover:text-gray-600">
+                      <button
+                        onClick={() => handleOpenPost(post)}
+                        className="text-gray-300 group-hover:text-gray-600"
+                      >
                         <MoreHorizontal size={16} />
                       </button>
                     </td>
                   </tr>
                 ))}
+                {!hasPostMetrics && (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className="px-8 py-10 text-center text-slate-500 text-sm"
+                    >
+                      No post analytics found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

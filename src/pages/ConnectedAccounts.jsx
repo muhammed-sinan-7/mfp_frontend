@@ -10,12 +10,15 @@ import {
   disconnectAccount,
 } from "../services/accountService";
 import ConnectAccountModal from "../components/connectaccountmodel/ConnectAccountModal";
+import { toast } from "sonner";
 
 function ConnectedAccounts() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [disconnectTarget, setDisconnectTarget] = useState(null);
+  const [disconnectLoading, setDisconnectLoading] = useState(false);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -34,22 +37,27 @@ function ConnectedAccounts() {
   const handleRefresh = async (accountId) => {
     try {
       await refreshAccount(accountId);
-      alert("Refresh triggered");
+      toast.success("Refresh triggered");
     } catch (err) {
       console.error(err);
-      alert("Failed to refresh");
+      toast.error("Failed to refresh");
     }
   };
 
   const handleDisconnect = async (accountId) => {
+    setDisconnectLoading(true);
     try {
       await disconnectAccount(accountId);
 
       // update UI
       setAccounts((prev) => prev.filter((acc) => acc.id !== accountId));
+      toast.success("Account disconnected");
+      setDisconnectTarget(null);
     } catch (err) {
       console.error(err);
-      alert("Failed to disconnect");
+      toast.error("Failed to disconnect");
+    } finally {
+      setDisconnectLoading(false);
     }
   };
 
@@ -159,7 +167,12 @@ function ConnectedAccounts() {
                   Settings
                 </button> */}
                 <button
-                  onClick={() => handleDisconnect(target.parentAccount.id)}
+                  onClick={() =>
+                    setDisconnectTarget({
+                      accountId: target.parentAccount.id,
+                      name: target.display_name || target.provider,
+                    })
+                  }
                   className="text-sm text-red-500 hover:text-red-600"
                 >
                   Disconnect
@@ -202,6 +215,19 @@ function ConnectedAccounts() {
           </button>
         </div>
       </div> */}
+
+      <ConfirmDisconnectModal
+        isOpen={Boolean(disconnectTarget)}
+        accountName={disconnectTarget?.name}
+        loading={disconnectLoading}
+        onClose={() => {
+          if (!disconnectLoading) setDisconnectTarget(null);
+        }}
+        onConfirm={() => {
+          if (!disconnectTarget?.accountId) return;
+          handleDisconnect(disconnectTarget.accountId);
+        }}
+      />
     </div>
   );
 }
@@ -211,6 +237,49 @@ function SummaryCard({ title, value }) {
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
       <p className="text-sm text-gray-500">{title}</p>
       <p className="text-xl font-semibold mt-2">{value}</p>
+    </div>
+  );
+}
+
+function ConfirmDisconnectModal({
+  isOpen,
+  accountName,
+  loading,
+  onClose,
+  onConfirm,
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-slate-900">
+            Disconnect Account?
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            {accountName
+              ? `This will disconnect ${accountName}. You can reconnect it later if needed.`
+              : "This will disconnect the selected account. You can reconnect it later if needed."}
+          </p>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-end gap-3">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-70"
+          >
+            {loading ? "Disconnecting..." : "Disconnect"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

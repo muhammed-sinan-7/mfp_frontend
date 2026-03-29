@@ -4,6 +4,7 @@ import {
   linkedinConnect,
   youtubeConnect,
 } from "../../services/accountService";
+import { toast } from "sonner";
 
 function ConnectAccountModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -13,7 +14,7 @@ function ConnectAccountModal({ isOpen, onClose }) {
       const { authorization_url } = await fn();
       window.location.href = authorization_url;
     } catch {
-      alert("Authentication failed.");
+      toast.error("Authentication failed.");
     }
   };
 

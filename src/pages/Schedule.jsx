@@ -193,6 +193,12 @@ export default function SchedulePage() {
             formData.append(`video_${id}`, media.video);
           }
 
+          // LinkedIn uses media.image (single File), not media.images (array)
+          if (media.image) {
+            formData.append(`image_${id}_0`, media.image);
+          }
+
+          // Instagram / multi-image platforms use media.images (array)
           media.images?.forEach((file, index) => {
             const isVideo = file.type.startsWith("video");
 

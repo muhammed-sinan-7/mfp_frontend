@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   getInstagramOverview,
   getInstagramGrowth,
@@ -13,12 +13,14 @@ export const useInstagramAnalytics = () => {
   const [growth, setGrowth] = useState([]);
   const [topPosts, setTopPosts] = useState([]);
   const [performance, setPerformance] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (loaded.current) return;
-    loaded.current = true;
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-    const load = async () => {
+    try {
       const [overviewRes, growthRes, topRes, performanceRes] =
         await Promise.all([
           getInstagramOverview(),
@@ -41,17 +43,29 @@ export const useInstagramAnalytics = () => {
           };
         }),
       );
-      setTopPosts(topRes.data);
-      setPerformance(performanceRes.data);
-    };
-
-    load();
+      setTopPosts(topRes.data || []);
+      setPerformance(performanceRes.data || []);
+    } catch (err) {
+      console.error("Instagram analytics fetch error:", err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
+    load();
+  }, [load]);
 
   return {
     overview,
     growth,
     topPosts,
     performance,
+    loading,
+    error,
+    refetch: load,
   };
 };

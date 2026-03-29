@@ -110,20 +110,9 @@ export default function InstagramEditor({
       </div>
 
       {/* COLUMN 2: EDITOR */}
-      <div className="flex-1 bg-white overflow-y-auto ml-3 rounded-xl px-18 py-10 relative">
-        {/* NEW AI BUTTON POSITION & STYLE */}
-        <div className="absolute top-8 right-10">
-          <button
-            onClick={() => window.dispatchEvent(new Event("open-ai"))}
-            className="group flex items-center gap-2 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-lg transition-all duration-200 shadow-sm active:scale-95"
-          >
-            <Sparkles size={14} className="text-gray-300 group-hover:text-white" />
-            <span className="text-[12px] font-medium tracking-tight">AI Assistant</span>
-          </button>
-        </div>
-
+      <div className="flex-1 bg-white overflow-y-auto ml-3 rounded-xl px-18 py-10">
         <div className="max-w-2xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-start mb-8 gap-4">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
                 Create Instagram Post
@@ -132,6 +121,22 @@ export default function InstagramEditor({
                 Craft your perfect visual story with optimized previews.
               </p>
             </div>
+            <button
+              onClick={() => window.dispatchEvent(new Event("open-ai"))}
+              className="group inline-flex items-center gap-2.5 pl-2 pr-3 py-1.5 bg-gradient-to-b from-white to-slate-50 border border-slate-200 hover:border-blue-300 text-gray-700 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 shrink-0"
+            >
+              <span className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+                <Sparkles size={13} />
+              </span>
+              <span className="flex flex-col items-start leading-tight">
+                <span className="text-[12px] font-semibold tracking-tight text-slate-800">
+                  AI Assistant
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  Smart suggestions
+                </span>
+              </span>
+            </button>
           </div>
 
           {/* Media Upload Area */}

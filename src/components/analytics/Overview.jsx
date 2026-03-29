@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react"; // Combined imports
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Eye,
   BarChart3,
@@ -10,6 +12,7 @@ import {
   Youtube,
   Image as ImageIcon, // 1. Rename the import here
 } from "lucide-react";
+import { exportRowsToCsv } from "../../services/csvExport";
 import {
   LineChart,
   Line,
@@ -29,12 +32,66 @@ const COLORS = {
   youtube: "#EF4444",
 };
 
+const PLATFORM_LABELS = {
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  youtube: "YouTube",
+};
+
+function EmptyMetricsState({ title = "No metrics found", subtitle }) {
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white px-6 py-10 text-center">
+      <p className="text-base font-semibold text-slate-800">{title}</p>
+      <p className="mt-1 text-sm text-slate-500">
+        {subtitle || "Data is not available for the selected period yet."}
+      </p>
+    </div>
+  );
+}
+
+function PieMetricsTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+
+  const row = payload[0]?.payload;
+  if (!row) return null;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-md">
+      <p className="text-xs font-semibold text-slate-700">{row.platformLabel}</p>
+      <p className="text-xs text-slate-500 mt-1">
+        Share: <span className="font-semibold text-slate-700">{row.percentage}%</span>
+      </p>
+      <p className="text-xs text-slate-500">
+        Engagement: <span className="font-semibold text-slate-700">{row.rawValue.toLocaleString()}</span>
+      </p>
+    </div>
+  );
+}
+
+function LineMetricsTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-md">
+      <p className="text-xs font-semibold text-slate-700 mb-1">{label}</p>
+      {payload.map((item) => (
+        <p key={item.dataKey} className="text-xs" style={{ color: item.color }}>
+          {(PLATFORM_LABELS[item.dataKey] || item.dataKey)}:{" "}
+          <span className="font-semibold">{Number(item.value || 0).toLocaleString()}</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
 const Overview = ({
   overview,
   chartData,
   engagementDistribution,
   recentPosts,
+  onRefresh,
 }) => {
+  const navigate = useNavigate();
   const safeChartData = useMemo(() => {
     if (!chartData || !Array.isArray(chartData)) return [];
 
@@ -55,10 +112,67 @@ const Overview = ({
     });
   }, [chartData]);
 
+  const safeDistribution = useMemo(() => {
+    if (!Array.isArray(engagementDistribution)) return [];
+
+    return engagementDistribution
+      .map((item) => {
+        const platform = String(item.platform || item.name || "").toLowerCase();
+        const rawValue = Number(item.value ?? item.count ?? item.total ?? 0);
+        const percentage = Number(item.percentage ?? 0);
+
+        return {
+          ...item,
+          platform,
+          platformLabel: PLATFORM_LABELS[platform] || "Unknown",
+          rawValue,
+          percentage,
+        };
+      })
+      .filter((item) => item.percentage > 0 || item.rawValue > 0);
+  }, [engagementDistribution]);
+
   const [activeIndex, setActiveIndex] = useState(null);
 
   const onPieEnter = (_, index) => {
     setActiveIndex(index);
+  };
+
+  const hasGrowthMetrics = safeChartData.some(
+    (row) =>
+      Number(row.instagram || 0) > 0 ||
+      Number(row.linkedin || 0) > 0 ||
+      Number(row.youtube || 0) > 0,
+  );
+
+  const visibleRecentPosts = (recentPosts || []).slice(0, 5);
+
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+
+    try {
+      await onRefresh();
+      toast.success("Overview refreshed from backend.");
+    } catch {
+      toast.error("Failed to refresh overview.");
+    }
+  };
+
+  const handleExportReport = () => {
+    const rows = visibleRecentPosts.map((post) => ({
+      title: post.title || "Untitled Post",
+      platform: post.platform || "",
+      impressions: Number(post.impressions || 0),
+      engagement_rate: Number(post.engagement_rate || 0),
+      status: post.engagement_rate > 5 ? "High Growth" : "Standard",
+    }));
+
+    const exported = exportRowsToCsv("overview-report.csv", rows);
+    if (exported) {
+      toast.success("Overview report downloaded.");
+    } else {
+      toast.info("No report data available to export.");
+    }
   };
 
   return (
@@ -66,7 +180,7 @@ const Overview = ({
       {/* HEADER */}
       <div className="flex font-sans antialiased text-slate-900 justify-between items-start mb-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mb-1">
             Analytics Overview
           </h1>
           <p className="text-gray-400 text-sm">
@@ -75,11 +189,17 @@ const Overview = ({
         </div>
 
         <div className="flex gap-3 pt-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+          >
             📅 Last 30 Days
           </button>
 
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-lg hover:bg-[#6D28D9] transition-colors">
+          <button
+            onClick={handleExportReport}
+            className="flex items-center gap-2 px-4 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-lg hover:bg-[#6D28D9] transition-colors"
+          >
             Download Report <ArrowUpRight size={16} />
           </button>
         </div>
@@ -147,65 +267,74 @@ const Overview = ({
         </h3>
 
         <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={safeChartData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#F3F4F6"
-              />
+          {safeChartData.length && hasGrowthMetrics ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={safeChartData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#F3F4F6"
+                />
 
-              <XAxis
-                dataKey="dateLabel"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: '#9CA3AF' }}
-              />
+                <XAxis
+                  dataKey="dateLabel"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                />
 
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
 
-              <Tooltip
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                labelFormatter={(label, payload) => {
-                  if (!payload || !payload.length) return label;
-                  const raw = payload[0].payload.date;
-                  return new Date(raw).toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-                }}
-              />
+                <Tooltip
+                  content={<LineMetricsTooltip />}
+                  labelFormatter={(label, payload) => {
+                    if (!payload || !payload.length) return label;
+                    const raw = payload[0].payload.date;
+                    return new Date(raw).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                  }}
+                />
 
-              <Line
-                type="monotone"
-                dataKey="instagram"
-                stroke={COLORS.instagram}
-                strokeWidth={3}
-                dot={false}
-                activeDot={{ r: 6 }}
-              />
+                <Line
+                  type="monotone"
+                  dataKey="instagram"
+                  stroke={COLORS.instagram}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                />
 
-              <Line
-                type="monotone"
-                dataKey="linkedin"
-                stroke={COLORS.linkedin}
-                strokeWidth={3}
-                dot={false}
-                activeDot={{ r: 6 }}
-              />
+                <Line
+                  type="monotone"
+                  dataKey="linkedin"
+                  stroke={COLORS.linkedin}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                />
 
-              <Line
-                type="monotone"
-                dataKey="youtube"
-                stroke={COLORS.youtube}
-                strokeWidth={3}
-                dot={false}
-                activeDot={{ r: 6 }}
+                <Line
+                  type="monotone"
+                  dataKey="youtube"
+                  stroke={COLORS.youtube}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <EmptyMetricsState
+                title="No growth metrics found"
+                subtitle="Platform growth will appear here when enough activity is available."
               />
-            </LineChart>
-          </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
@@ -219,7 +348,7 @@ const Overview = ({
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={engagementDistribution || []}
+                  data={safeDistribution}
                   dataKey="percentage"
                   innerRadius={65}
                   outerRadius={85}
@@ -231,7 +360,7 @@ const Overview = ({
                   activeOuterRadius={95}
                   onMouseEnter={onPieEnter}
                 >
-                  {(engagementDistribution || []).map((entry, index) => (
+                  {safeDistribution.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[entry.platform] || "#E5E7EB"}
@@ -239,38 +368,52 @@ const Overview = ({
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<PieMetricsTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           
-          <div className="mt-4 space-y-3">
-            {[
-              { name: "Instagram", key: "instagram" },
-              { name: "YouTube", key: "youtube" },
-              { name: "LinkedIn", key: "linkedin" },
-            ].map((platform) => {
-              const data = engagementDistribution?.find(
-                (p) => p.platform === platform.key
-              );
-              return (
-                <div key={platform.key} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ background: COLORS[platform.key] }} />
-                    <span className="text-gray-600 font-medium">{platform.name}</span>
+          {safeDistribution.length ? (
+            <div className="mt-4 space-y-3">
+              {[
+                { name: "Instagram", key: "instagram" },
+                { name: "YouTube", key: "youtube" },
+                { name: "LinkedIn", key: "linkedin" },
+              ].map((platform) => {
+                const data = safeDistribution.find(
+                  (p) => p.platform === platform.key
+                );
+                return (
+                  <div key={platform.key} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ background: COLORS[platform.key] }} />
+                      <span className="text-gray-600 font-medium">{platform.name}</span>
+                    </div>
+                    <span className="font-bold text-gray-800">{Number(data?.percentage || 0).toFixed(1)}%</span>
                   </div>
-                  <span className="font-bold text-gray-800">{data?.percentage || 0}%</span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4">
+              <EmptyMetricsState
+                title="No engagement distribution found"
+                subtitle="Platform share will appear here after engagement data is collected."
+              />
+            </div>
+          )}
         </div>
 
         {/* RECENT POSTS */}
         <div className="col-span-1 lg:col-span-8 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-lg text-gray-800">Recent Global Posts</h3>
-            <button className="text-sm font-medium text-indigo-600 hover:underline">View All</button>
+            <button
+              onClick={() => navigate("/posts")}
+              className="text-sm font-medium text-indigo-600 hover:underline"
+            >
+              View All
+            </button>
           </div>
 
           <div className="overflow-x-auto">
@@ -286,12 +429,18 @@ const Overview = ({
               </thead>
 
               <tbody className="divide-y divide-gray-50">
-                {(recentPosts || []).map((post) => (
+                {visibleRecentPosts.map((post) => (
                   <tr key={post.post_id} className="group hover:bg-gray-50/50 transition-colors">
                     <td className="py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                          {post.thumbnail ? (
+                          {post.thumbnail && post.media_type === "VIDEO" ? (
+                            <video
+                              src={post.thumbnail}
+                              className="w-full h-full object-cover"
+                              muted
+                            />
+                          ) : post.thumbnail ? (
                             <img src={post.thumbnail} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-indigo-300">
@@ -301,7 +450,7 @@ const Overview = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm font-semibold text-gray-700 line-clamp-1">{post.title || "Untitled Post"}</span>
-                          <span className="text-[11px] text-gray-400">{post.created_at_human || "Recently"}</span>
+                          <span className="text-[11px] text-gray-400">{post.created_at || "Recently"}</span>
                         </div>
                       </div>
                     </td>
@@ -338,6 +487,16 @@ const Overview = ({
                     </td>
                   </tr>
                 ))}
+                {!visibleRecentPosts.length && (
+                  <tr>
+                    <td colSpan={5} className="py-12 px-4">
+                      <EmptyMetricsState
+                        title="No recent posts found"
+                        subtitle="Recent global post metrics will appear here once content is published."
+                      />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

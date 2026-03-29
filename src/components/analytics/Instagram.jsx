@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
-import { useInstagramAnalytics } from "../../hooks/useInstagramAnalytics";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Users,
   Eye,
@@ -11,7 +12,9 @@ import {
   Download,
   ChevronRight,
   ExternalLink,
+  Image as ImageIcon,
 } from "lucide-react";
+import { exportRowsToCsv } from "../../services/csvExport";
 import {
   AreaChart,
   Area,
@@ -22,9 +25,33 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const InstagramAnalytics = () => {
-  const { overview, growth, topPosts, gallery, performance } =
-    useInstagramAnalytics();
+const InstagramAnalytics = ({
+  overview,
+  growth,
+  topPosts,
+  performance,
+  onRefresh,
+}) => {
+  const navigate = useNavigate();
+  const gallery = (performance || [])
+    .filter((post) => post.thumbnail)
+    .map((post) => ({
+      id: post.post_id || post.id,
+      title: post.title,
+      thumbnail: post.thumbnail,
+    }));
+
+  const hasGrowthMetrics = (growth || []).length > 0;
+  const hasTopPostMetrics = (topPosts || []).length > 0;
+  const hasPerformanceMetrics = (performance || []).length > 0;
+  const hasGalleryMetrics = (gallery || []).length > 0;
+
+  const hasData =
+    Boolean(overview) ||
+    hasGrowthMetrics ||
+    hasTopPostMetrics ||
+    hasPerformanceMetrics ||
+    hasGalleryMetrics;
 
   const kpiData = [
     {
@@ -61,13 +88,63 @@ const InstagramAnalytics = () => {
     },
   ];
 
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+
+    try {
+      await onRefresh();
+      toast.success("Instagram analytics refreshed.");
+    } catch {
+      toast.error("Failed to refresh Instagram analytics.");
+    }
+  };
+
+  const handleExport = () => {
+    const rows = (performance || []).map((post) => ({
+      title: post.title || "Untitled",
+      type: post.type || "",
+      engagement: Number(post.engagement || 0),
+      reach: Number(post.reach || 0),
+      date: post.date || "",
+    }));
+
+    const exported = exportRowsToCsv("instagram-content-performance.csv", rows);
+    if (exported) {
+      toast.success("Instagram performance CSV downloaded.");
+    } else {
+      toast.info("No performance data available to export.");
+    }
+  };
+
+  const handleOpenPost = (post) => {
+    const postUrl = post?.url || post?.permalink || post?.post_url;
+    if (!postUrl) {
+      toast.info("No public URL is available for this post yet.");
+      return;
+    }
+    window.open(postUrl, "_blank", "noopener,noreferrer");
+  };
+
+  if (!hasData) {
+    return (
+      <div className="w-full flex items-center justify-center py-16">
+        <div className="w-full max-w-lg rounded-2xl border border-blue-100 bg-white px-8 py-10 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-800">No metrics found</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Instagram analytics data is currently empty. Metrics will appear once posts start getting engagement.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full bg-[#F9FAFB] min-h-screen  font-sans text-gray-900">
-      <div className="max-w-[1200px] mx-auto">
+    <div className="w-full font-sans text-gray-900">
+      <div>
         {/* Header Section */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-semibold text-gray-900">
               Instagram Insights
             </h1>
             <p className="text-gray-400 pt-1 text-sm">
@@ -75,13 +152,22 @@ const InstagramAnalytics = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm"
+            >
               <Filter size={14} /> Filter
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm"
+            >
               <Share2 size={14} /> Export
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-md">
+            <button
+              onClick={() => navigate("/schedule")}
+              className="flex items-center gap-2 px-4 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-md"
+            >
               <Zap size={14} fill="currentColor" /> Boost Content
             </button>
           </div>
@@ -133,48 +219,54 @@ const InstagramAnalytics = () => {
               </div>
             </div>
             <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={growth}>
-                  <defs>
-                    <linearGradient id="colorLikes" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#F3F4F6"
-                  />
-                  <XAxis
-                    dataKey="dateLabel"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                  />
-                  <Tooltip />
-                  <Area
-                    type="basis"
-                    dataKey="likes"
-                    stroke="#8B5CF6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorLikes)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="comments"
-                    stroke="#1F2937"
-                    strokeWidth={2}
-                    fill="transparent"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {hasGrowthMetrics ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={growth}>
+                    <defs>
+                      <linearGradient id="colorLikes" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#F3F4F6"
+                    />
+                    <XAxis
+                      dataKey="dateLabel"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                    />
+                    <Tooltip />
+                    <Area
+                      type="basis"
+                      dataKey="likes"
+                      stroke="#8B5CF6"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorLikes)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="comments"
+                      stroke="#1F2937"
+                      strokeWidth={2}
+                      fill="transparent"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full rounded-xl border border-blue-100 bg-white flex items-center justify-center text-sm text-slate-500">
+                  No growth metrics found.
+                </div>
+              )}
             </div>
           </div>
 
@@ -185,13 +277,26 @@ const InstagramAnalytics = () => {
               Best engagement rate this week.
             </p>
             <div className="space-y-5 flex-1">
-              {topPosts?.map((post, i) => (
+              {hasTopPostMetrics && topPosts?.map((post, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                    <img
-                      src={`https://api.dicebear.com/7.x/shapes/svg?seed=${post.post_id}`}
-                      alt=""
-                    />
+                    {post.thumbnail && post.media_type === "VIDEO" ? (
+                      <video
+                        src={post.thumbnail}
+                        className="w-full h-full object-cover"
+                        muted
+                      />
+                    ) : post.thumbnail ? (
+                      <img
+                        src={post.thumbnail}
+                        alt={post.title || "post media"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <ImageIcon size={14} />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -214,8 +319,16 @@ const InstagramAnalytics = () => {
                   </span>
                 </div>
               ))}
+              {!hasTopPostMetrics && (
+                <div className="rounded-xl border border-blue-100 bg-white px-4 py-6 text-center text-sm text-slate-500">
+                  No top post metrics found.
+                </div>
+              )}
             </div>
-            <button className="w-full text-violet-600 text-[10px] font-bold mt-6 flex items-center justify-center gap-1">
+            <button
+              onClick={() => navigate("/posts")}
+              className="w-full text-violet-600 text-[10px] font-bold mt-6 flex items-center justify-center gap-1"
+            >
               View All Content <ChevronRight size={12} />
             </button>
           </div>
@@ -225,23 +338,32 @@ const InstagramAnalytics = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-lg">Recent Media Gallery</h3>
-            <button className="text-violet-600 text-xs font-bold">
+            <button
+              onClick={() => navigate("/posts")}
+              className="text-violet-600 text-xs font-bold"
+            >
               View Insights Grid
             </button>
           </div>
           <div className="grid grid-cols-6 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm group cursor-pointer"
-              >
-                <img
-                  src={`https://api.dicebear.com/7.x/shapes/svg?seed=gallery-${i}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  alt=""
-                />
+            {(gallery || []).length ? (
+              (gallery || []).slice(0, 6).map((item, i) => (
+                <div
+                  key={item.id || i}
+                  className="aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm group cursor-pointer"
+                >
+                  <img
+                    src={item.thumbnail || item.image || item.url}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    alt={item.title || "media"}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="col-span-6 rounded-xl border border-blue-100 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                No media found.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -254,7 +376,10 @@ const InstagramAnalytics = () => {
                 A granular look at your recent posts and their reach.
               </p>
             </div>
-            <button className="bg-gray-50 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold border border-gray-100 flex items-center gap-2">
+            <button
+              onClick={handleExport}
+              className="bg-gray-50 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold border border-gray-100 flex items-center gap-2"
+            >
               Download CSV <Download size={14} />
             </button>
           </div>
@@ -270,37 +395,58 @@ const InstagramAnalytics = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {performance?.map((post, i) => (
-                <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-gray-100" />
-                      <span className="text-xs font-bold text-gray-900">
-                        {post.title}
+              {hasPerformanceMetrics ? (
+                performance?.map((post, i) => (
+                  <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-gray-100 overflow-hidden flex items-center justify-center">
+                          {post.thumbnail && post.media_type === "VIDEO" ? (
+                            <video
+                              src={post.thumbnail}
+                              className="w-full h-full object-cover"
+                              muted
+                            />
+                          ) : post.thumbnail ? (
+                            <img
+                              src={post.thumbnail}
+                              alt={post.title || "post media"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon size={12} className="text-gray-400" />
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-gray-900">
+                          {post.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                        {post.type}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
-                      {post.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-xs font-bold text-gray-700">
-                    {post.engagement}
-                  </td>
-                  <td className="px-6 py-4 text-xs font-bold text-gray-700">
-                    {post.reach}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-500 font-medium">
-                    {post.date}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <button className="text-gray-400 hover:text-violet-600">
-                      <ExternalLink size={14} />
-                    </button>
-                  </td>
-                </tr>
-              )) || (
+                    </td>
+                    <td className="px-6 py-4 text-xs font-bold text-gray-700">
+                      {post.engagement}
+                    </td>
+                    <td className="px-6 py-4 text-xs font-bold text-gray-700">
+                      {post.reach}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-500 font-medium">
+                      {post.date}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleOpenPost(post)}
+                        className="text-gray-400 hover:text-violet-600"
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td
                     colSpan="6"

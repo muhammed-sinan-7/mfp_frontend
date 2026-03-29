@@ -1,18 +1,28 @@
-function StatCard({ title, value, growth }) {
-  const positive = growth.includes("+");
+import React from "react";
+
+function StatCard({ title, value, growth, icon, className = "" }) {
+  // Safety check to prevent the "Cannot read properties of undefined" error
+  const isPositive = growth?.includes("+");
 
   return (
-    <div className="relative bg-[#16161d] border border-[#2a2a33] p-6 rounded-2xl hover:border-[#7c5dfa]/40 transition-all duration-300">
-      
-      {/* Growth */}
-      <div className="absolute top-4 right-4 text-xs font-medium">
-        <span className={positive ? "text-green-400" : "text-red-400"}>
-          {growth}
-        </span>
+    <div className={`bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group ${className}`}>
+      <div className="flex justify-between items-start">
+        <div className="p-2 bg-slate-50 rounded-lg group-hover:bg-blue-50 transition-colors">
+          {icon}
+        </div>
+        {growth && (
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+            isPositive ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+          }`}>
+            {growth}
+          </span>
+        )}
       </div>
 
-      <p className="text-gray-400 text-sm">{title}</p>
-      <h2 className="text-3xl font-bold mt-3">{value}</h2>
+      <div className="mt-4">
+        <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">{title}</p>
+        <h2 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{value}</h2>
+      </div>
     </div>
   );
 }

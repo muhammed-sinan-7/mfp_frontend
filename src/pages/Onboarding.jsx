@@ -9,6 +9,7 @@ import {
   BriefcaseIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
+import { toast } from "sonner";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function Onboarding() {
       localStorage.setItem("orgId", orgId);
       navigate("/dashboard");
     } catch {
-      alert("Organization creation failed");
+      toast.error("Organization creation failed");
     }
   };
 

@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Register from "./pages/Register";
 import VerifyOtp from "./pages/VerifyOtp";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -19,6 +21,7 @@ import { Toaster } from "sonner";
 import Analytics from "./pages/Analytics";
 // import CreateSchedulePage from "./pages/CreateSchedulePage";
 import News from "./pages/News";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -35,15 +38,56 @@ function App() {
           },
         }}
       />
+
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
 
           <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/login"
             element={
               <PublicRoute>
                 <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/verify-otp"
+            element={
+              <PublicRoute>
+                <VerifyOtp />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <PublicRoute>
+                <ResetPassword />
               </PublicRoute>
             }
           />
@@ -67,7 +111,7 @@ function App() {
             <Route path="/team" element={<div>Team</div>} />
             <Route path="/audit" element={<AuditLogs />} />
             <Route path="/recycle-bin" element={<RecycleBinPage />} />
-            <Route path="/settings" element={<div>Settings</div>} />
+            <Route path="/settings" element={<Settings/>} />
             <Route path="/feeds" element={<News />} />
           </Route>
         </Routes>

@@ -16,7 +16,8 @@ const News = () => {
     try {
       setLoading(true);
       const res = await getNews(pageNumber);
-      setNews((prev) => [...prev, ...(res.data || [])]);
+      // console.log(res.data)
+      setNews((prev) => [...prev, ...(res.data.results || [])]);
     } catch (err) {
       console.error("Failed to load news", err);
     } finally {
@@ -44,10 +45,10 @@ const News = () => {
     return <div className="p-8 text-gray-400">Loading discovery feed...</div>;
 
   return (
-    <div className="flex min-h-screen font-sans text-slate-900 bg-gray-50/40">
-      <main className="flex-1 p-6 md:p-8 lg:p-10 max-w-7xl mx-auto">
+    <div className="w-full font-sans text-slate-900 bg-gray-50/40">
+      <main className="w-full">
         <section>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">Discovery Feed</h1>
+          <h1 className="text-2xl font-semibold mb-2">Discovery Feed</h1>
           <p className="text-gray-600 mb-10 md:mb-12 text-lg">
             Curated insights from the world of tech and design.
           </p>

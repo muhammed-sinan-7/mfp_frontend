@@ -106,9 +106,9 @@ export default function LinkedInEditor({
       </div>
 
       {/* MIDDLE COLUMN */}
-      <div className="flex-1 bg-white h-150 rounded-xl  p-10 overflow-y-auto">
+      <div className="flex-1 bg-white h-150 rounded-xl p-10 overflow-y-auto">
         <div className="max-w-xl mx-auto">
-          <div className="flex justify-between items-start mb-8">
+          <div className="flex justify-between items-start mb-8 gap-4">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
                 Create LinkedIn Post
@@ -119,7 +119,7 @@ export default function LinkedInEditor({
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <label className="flex items-center gap-2 px-4  py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer shadow-sm">
                 <input
                   type="file"
@@ -130,19 +130,23 @@ export default function LinkedInEditor({
 
                 <span>Media</span>
               </label>
+              <button
+                onClick={() => window.dispatchEvent(new Event("open-ai"))}
+                className="group inline-flex items-center gap-2.5 pl-2 pr-3 py-1.5 bg-gradient-to-b from-white to-slate-50 border border-slate-200 hover:border-blue-300 text-gray-700 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+              >
+                <span className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+                  <Sparkles size={13} />
+                </span>
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="text-[12px] font-semibold tracking-tight text-slate-800">
+                    AI Assistant
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    Smart suggestions
+                  </span>
+                </span>
+              </button>
             </div>
-            <button
-              onClick={() => window.dispatchEvent(new Event("open-ai"))}
-              className="group flex items-center gap-2 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-lg transition-all duration-200 shadow-sm active:scale-95"
-            >
-              <Sparkles
-                size={14}
-                className="text-gray-300 group-hover:text-white"
-              />
-              <span className="text-[12px] font-medium tracking-tight">
-                AI Assistant
-              </span>
-            </button>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-100 transition">

@@ -13,6 +13,12 @@ export const verifyOtp = (data) =>
 export const loginUser = (data) =>
   API.post("auth/login/", data);
 
+export const requestPasswordReset = (data) =>
+  API.post("auth/request-password-reset/", data);
+
+export const resetPassword = (data) =>
+  API.post("auth/reset-password/", data);
+
 export const createOrganization = (data) =>
   API.post("organizations/create/", data);
 

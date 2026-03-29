@@ -142,6 +142,8 @@ export default function RecycleBinPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const loadPosts = async (pageNumber = 1) => {
     try {
@@ -166,11 +168,6 @@ export default function RecycleBinPage() {
   }, []);
 
   const handlePermanentDelete = async (postId) => {
-    const confirmDelete = window.confirm(
-      "Delete permanently? This cannot be undone.",
-    );
-    if (!confirmDelete) return;
-
     try {
       await permanentlyDeletePost(postId);
 
@@ -185,12 +182,6 @@ export default function RecycleBinPage() {
   };
 
   const handleEmptyBin = async () => {
-    const confirmDelete = window.confirm(
-      "This will permanently delete ALL posts. Continue?",
-    );
-
-    if (!confirmDelete) return;
-
     try {
       const res = await emptyRecycleBin();
 
@@ -200,6 +191,26 @@ export default function RecycleBinPage() {
       setTotalItems(0);
     } catch {
       toast.error("Failed to empty recycle bin");
+    }
+  };
+
+  const openConfirm = (config) => {
+    setConfirmDialog(config);
+  };
+
+  const closeConfirm = () => {
+    if (confirmLoading) return;
+    setConfirmDialog(null);
+  };
+
+  const runConfirm = async () => {
+    if (!confirmDialog?.onConfirm) return;
+    setConfirmLoading(true);
+    try {
+      await confirmDialog.onConfirm();
+      setConfirmDialog(null);
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -228,13 +239,13 @@ export default function RecycleBinPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#F8FAFC] font-sans text-slate-900">
+    <div className="flex flex-col min-h-full bg-[#F8FAFC] font-sans text-slate-900">
       {/* 01. Minimal Unified Header (No white BG) */}
-      <div className="px-10 pt-10 pb-6 max-w-[1400px] mx-auto w-full space-y-8">
+      <div className="pb-6 space-y-8">
         <div className="flex items-end justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
                 Recycle Bin
               </h1>
               <span className="px-2.5 py-0.5 bg-blue-100 text-blue-700 text-[11px] font-bold rounded-md uppercase tracking-wider">
@@ -248,7 +259,15 @@ export default function RecycleBinPage() {
           </div>
 
           <button
-            onClick={handleEmptyBin}
+            onClick={() =>
+              openConfirm({
+                title: "Empty Recycle Bin?",
+                description:
+                  "This will permanently delete all posts in the recycle bin. This action cannot be undone.",
+                confirmLabel: "Delete All",
+                onConfirm: handleEmptyBin,
+              })
+            }
             className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[13px] font-bold rounded-xl shadow-lg shadow-red-200 transition-all active:scale-95"
           >
             <Icons.Trash />
@@ -276,7 +295,7 @@ export default function RecycleBinPage() {
       </div>
 
       {/* 03. Scrollable Table Area */}
-      <main className="flex-1 overflow-y-auto px-10 pb-10 max-w-[1400px] mx-auto w-full">
+      <main className="flex-1 overflow-y-auto pb-8">
         <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
           <table className="w-full text-left">
             <thead>
@@ -353,7 +372,15 @@ export default function RecycleBinPage() {
                         <Icons.Restore />
                       </button>
                       <button
-                        onClick={() => handlePermanentDelete(post.id)}
+                        onClick={() =>
+                          openConfirm({
+                            title: "Delete Permanently?",
+                            description:
+                              "This post will be permanently removed and cannot be restored.",
+                            confirmLabel: "Delete Permanently",
+                            onConfirm: () => handlePermanentDelete(post.id),
+                          })
+                        }
                         className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                       >
                         <Icons.Trash />
@@ -368,7 +395,7 @@ export default function RecycleBinPage() {
       </main>
 
       {/* 04. Minimal Pagination Footer */}
-      <footer className="px-10 py-5 bg-white border-t border-slate-200 flex items-center justify-between">
+      <footer className="py-5 bg-white border-t border-slate-200 flex items-center justify-between">
         <p className="text-[13px] font-semibold text-slate-400">
           Page <span className="text-slate-900">{page}</span> of {totalPages}
         </p>
@@ -389,6 +416,55 @@ export default function RecycleBinPage() {
           </button>
         </div>
       </footer>
+
+      <ConfirmActionModal
+        isOpen={Boolean(confirmDialog)}
+        title={confirmDialog?.title}
+        description={confirmDialog?.description}
+        confirmLabel={confirmDialog?.confirmLabel}
+        isLoading={confirmLoading}
+        onClose={closeConfirm}
+        onConfirm={runConfirm}
+      />
+    </div>
+  );
+}
+
+function ConfirmActionModal({
+  isOpen,
+  title,
+  description,
+  confirmLabel,
+  isLoading,
+  onClose,
+  onConfirm,
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+          <p className="mt-2 text-sm text-slate-600">{description}</p>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-end gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-70"
+          >
+            {isLoading ? "Deleting..." : confirmLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

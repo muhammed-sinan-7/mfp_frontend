@@ -7,7 +7,7 @@ import { useLinkedinAnalytics } from "../hooks/useLinkedinAnalytics";
 import { useYoutubeAnalytics } from "../hooks/useYoutubeAnalytics";
 
 import Overview from "../components/analytics/Overview";
-import InstagramAnalytics from "../components/analytics/instagram";
+import InstagramAnalytics from "../components/analytics/Instagram";
 import LinkedInAnalytics from "../components/analytics/Linkedin";
 import YouTubeAnalytics from "../components/analytics/Youtube";
 
@@ -23,6 +23,7 @@ const OverviewTab = () => {
       chartData={overviewData.chartData}
       engagementDistribution={overviewData.engagementDistribution}
       recentPosts={overviewData.recentPosts}
+      onRefresh={overviewData.refetch}
     />
   );
 };
@@ -32,10 +33,11 @@ const InstagramTab = () => {
 
   return (
     <InstagramAnalytics
-      metrics={instagramData.overview}
-      growthData={instagramData.growth}
-      mediaGallery={instagramData.gallery}
-      performanceData={instagramData.performance}
+      overview={instagramData.overview}
+      growth={instagramData.growth}
+      topPosts={instagramData.topPosts}
+      performance={instagramData.performance}
+      onRefresh={instagramData.refetch}
     />
   );
 };
@@ -48,6 +50,7 @@ const LinkedinTab = () => {
       overview={linkedinData.overview}
       growth={linkedinData.growth}
       posts={linkedinData.posts}
+      onRefresh={linkedinData.refetch}
     />
   );
 };
@@ -61,6 +64,7 @@ const YoutubeTab = () => {
       growth={youtubeData.growth}
       videos={youtubeData.videos}
       trafficSources={youtubeData.trafficSources}
+      onRefresh={youtubeData.refetch}
     />
   );
 };
@@ -72,10 +76,10 @@ const Analytics = () => {
   const [platform, setPlatform] = useState("overview");
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] font-sans text-gray-900">
+    <div className="w-full font-sans text-gray-900">
 
       {/* Navigation Tabs */}
-      <header className="px-8 py-4 flex justify-center items-center fix top-0 z-20">
+      <header className="flex justify-center items-center mb-6">
         <nav className="flex justify-center items-center bg-gray-50 rounded-xl p-1 border border-gray-100">
           {["overview", "instagram", "linkedin", "youtube"].map((tab) => (
             <button
@@ -96,7 +100,7 @@ const Analytics = () => {
         </nav>
       </header>
 
-      <main className="max-w-[1200px] mx-auto p-8">
+      <main className="space-y-8">
 
         {platform === "overview" && <OverviewTab />}
 

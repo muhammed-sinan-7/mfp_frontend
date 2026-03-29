@@ -1,12 +1,22 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  LockClosedIcon,
+  EnvelopeIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/outline";
+import { toast } from "sonner";
 import { loginSchema } from "../validation/loginSchema";
 import { loginUser } from "../services/authService";
-import { Link, useNavigate } from "react-router-dom";
-import { LockClosedIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -19,53 +29,58 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       const response = await loginUser(data);
-      const { access, refresh, org_id, org_name, role } = response.data;
+      const res = response.data;
 
-      localStorage.setItem("accessToken", access);
-      localStorage.setItem("refreshToken", refresh);
+      if (res.requires_verification) {
+        sessionStorage.setItem("otpEmail", res.email);
+        navigate("/verify-otp", { state: { email: res.email } });
+        return;
+      }
+
+      const { access, refresh, org_id, org_name, role } = res;
 
       if (org_id) {
-        localStorage.setItem("orgId", org_id);
-        localStorage.setItem("orgName", org_name);
-        localStorage.setItem("role", role);
-        navigate("/dashboard");
+        login({
+          access,
+          refresh,
+          org: org_id ? { id: org_id, name: org_name, role } : undefined,
+        });
+        navigate(org_id ? "/dashboard" : "/onboarding");
       } else {
         navigate("/onboarding");
       }
-    } catch {
-      alert("Invalid email or password");
+    } catch (error) {
+      const msg = error.response?.data?.error;
+
+      if (msg === "Account locked") {
+        toast.error("Your account is temporarily locked. Try again later.");
+      } else if (error.response?.status === 429) {
+        toast.error("Too many requests. Please wait.");
+      } else {
+        toast.error(msg || "Login failed");
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white rotate-45"></div>
           </div>
         </div>
 
-        {/* Header */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Sign in to MFP
-          </h2>
+          <h2 className="text-2xl font-semibold text-gray-900">Sign in to MFP</h2>
           <p className="text-sm text-gray-500 mt-2">
             Enter your credentials to access your marketing dashboard
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
-          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
             <div className="relative">
               <EnvelopeIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -75,40 +90,40 @@ export default function Login() {
                 className="w-full border border-gray-300 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
             </div>
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.email.message}
-              </p>
-            )}
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
           </div>
 
-          {/* Password */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <span className="text-xs text-blue-600 cursor-pointer hover:underline">
+              <label className="text-sm font-medium text-gray-700">Password</label>
+              <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline">
                 Forgot password?
-              </span>
+              </Link>
             </div>
             <div className="relative">
               <LockClosedIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                type="password"
-                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+                placeholder="********"
                 {...register("password")}
-                className="w-full border border-gray-300 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full border border-gray-300 rounded-lg py-3 pl-10 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="w-5 h-5" />
+                ) : (
+                  <EyeIcon className="w-5 h-5" />
+                )}
+              </button>
             </div>
-            {errors.password && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.password.message}
-              </p>
-            )}
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
-          {/* Remember */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -120,7 +135,6 @@ export default function Login() {
             </label>
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -130,44 +144,21 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Divider */}
         <div className="my-8 flex items-center">
           <div className="flex-grow border-t border-gray-200"></div>
-          <span className="px-3 text-xs text-gray-400 uppercase">
-            OR CONTINUE WITH
-          </span>
+          <span className="px-3 text-xs text-gray-400 uppercase">OR CONTINUE WITH</span>
           <div className="flex-grow border-t border-gray-200"></div>
         </div>
 
-        {/* Social Buttons (UI Only) */}
-        {/* <div className="space-y-3">
-          <button className="w-full border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50">
-            Sign in with LinkedIn
-          </button>
-          <button className="w-full border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50">
-            Sign in with Meta
-          </button>
-          <button className="w-full border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50">
-            Sign in with YouTube
-          </button>
-        </div> */}
-
-        {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600">
-          Don’t have an account yet?{" "}
-          <Link
-            to="/register"
-            className="text-blue-600 font-medium hover:underline"
-          >
+          Do not have an account yet?{" "}
+          <Link to="/register" className="text-blue-600 font-medium hover:underline">
             Create an organization
           </Link>
         </div>
 
-        {/* Bottom Trust Indicators */}
         <div className="mt-10 pt-6 border-t border-gray-200 text-center">
-          <div className="text-xs text-gray-400 uppercase mb-4">
-            Systems Operational
-          </div>
+          <div className="text-xs text-gray-400 uppercase mb-4">Systems Operational</div>
           <div className="flex justify-center gap-8 text-sm text-gray-700">
             <div>
               <div className="font-semibold">99.9%</div>

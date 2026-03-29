@@ -1,15 +1,15 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Users,
   PlayCircle,
   DollarSign,
-  TrendingUp,
-  Calendar,
-  Download,
   ChevronRight,
-  Search,
   Youtube as YoutubeIcon,
+  Image as ImageIcon,
 } from "lucide-react";
+import { exportRowsToCsv } from "../../services/csvExport";
 import {
   AreaChart,
   Area,
@@ -20,8 +20,19 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
-  const formattedGrowth = growth.map((d) => ({
+const YouTubeAnalytics = ({ overview, growth, videos, trafficSources, onRefresh }) => {
+  const navigate = useNavigate();
+  const safeGrowth = Array.isArray(growth) ? growth : [];
+  const safeVideos = Array.isArray(videos) ? videos : [];
+  const safeTrafficSources = Array.isArray(trafficSources) ? trafficSources : [];
+
+  const hasData =
+    Boolean(overview) ||
+    safeGrowth.length > 0 ||
+    safeVideos.length > 0 ||
+    safeTrafficSources.length > 0;
+
+  const formattedGrowth = safeGrowth.map((d) => ({
     ...d,
     day: new Date(d.day).toLocaleDateString("en-US", {
       month: "short",
@@ -29,7 +40,7 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
     }),
   }));
 
-  const organicPercent = trafficSources
+  const organicPercent = safeTrafficSources
     .filter((s) => !s.label.toLowerCase().includes("external"))
     .reduce((sum, s) => sum + s.percentage, 0);
 
@@ -62,9 +73,54 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
     },
   ];
 
+  const hasGrowthMetrics = safeGrowth.length > 0;
+  const hasVideoMetrics = safeVideos.length > 0;
+  const hasTrafficMetrics = safeTrafficSources.length > 0;
+
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+
+    try {
+      await onRefresh();
+      toast.success("YouTube analytics refreshed.");
+    } catch {
+      toast.error("Failed to refresh YouTube analytics.");
+    }
+  };
+
+  const handleExport = () => {
+    const rows = safeVideos.map((video) => ({
+      title: video.title || "Untitled",
+      views: Number(video.views || 0),
+      ctr: Number(video.ctr || 0),
+      comments: Number(video.comments || 0),
+      status: video.status || "",
+    }));
+
+    const exported = exportRowsToCsv("youtube-video-performance.csv", rows);
+    if (exported) {
+      toast.success("YouTube performance CSV downloaded.");
+    } else {
+      toast.info("No YouTube video data available to export.");
+    }
+  };
+
+  if (!hasData) {
+    return (
+      <div className="w-full flex items-center justify-center py-16">
+        <div className="w-full max-w-lg rounded-2xl border border-blue-100 bg-white px-8 py-10 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-800">No metrics found</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            YouTube analytics data is currently empty. Metrics will appear after channel activity is tracked.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full bg-[#F9FAFB] min-h-screen  font-sans text-gray-900">
-      <div className="max-w-[1200px] mx-auto">
+    <div className="w-full font-sans text-gray-900">
+      <div>
         {/* Header Section */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -72,7 +128,7 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
               <div className="bg-red-600 p-1 rounded-md text-white">
                 <YoutubeIcon size={16} fill="currentColor" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-semibold text-gray-900">
                 YouTube Channel Insights
               </h1>
             </div>
@@ -84,7 +140,10 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
             <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-500 shadow-sm">
               Dec 01, 2023 - Dec 31, 2023
             </div>
-            <button className="flex items-center gap-2 px-6 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-md shadow-violet-100 hover:bg-[#6D28D9] transition-all">
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-6 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-bold shadow-md shadow-violet-100 hover:bg-[#6D28D9] transition-all"
+            >
               Generate Report
             </button>
           </div>
@@ -148,42 +207,48 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
             </div>
           </div>
           <div className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={formattedGrowth}>
-                <defs>
-                  <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#F3F4F6"
-                />
-                <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                />
-                <Tooltip />
-                <Area
-                  type="natural"
-                  dataKey="views"
-                  stroke="#7C3AED"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorViews)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {hasGrowthMetrics ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={formattedGrowth}>
+                  <defs>
+                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#F3F4F6"
+                  />
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                    dy={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                  />
+                  <Tooltip />
+                  <Area
+                    type="natural"
+                    dataKey="views"
+                    stroke="#7C3AED"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorViews)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full rounded-xl border border-blue-100 bg-white flex items-center justify-center text-sm text-slate-500">
+                No audience metrics found.
+              </div>
+            )}
           </div>
           <div className="flex justify-center gap-6 mt-4 text-[10px] font-bold">
             <div className="flex items-center gap-1.5 text-violet-600">
@@ -209,7 +274,10 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
                   Key metrics for your latest uploads
                 </p>
               </div>
-              <button className="text-violet-600 text-xs font-bold flex items-center gap-1 hover:underline">
+              <button
+                onClick={() => navigate("/posts")}
+                className="text-violet-600 text-xs font-bold flex items-center gap-1 hover:underline"
+              >
                 View All <ChevronRight size={14} />
               </button>
             </div>
@@ -225,15 +293,29 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {videos?.map((video, i) => (
+                  {hasVideoMetrics && safeVideos?.map((video, i) => (
                     <tr
                       key={i}
                       className="hover:bg-gray-50/30 transition-colors group"
                     >
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-8 bg-violet-100 rounded-md overflow-hidden flex-shrink-0">
-                            <div className="w-full h-full bg-gradient-to-br from-violet-400 to-indigo-600 opacity-80" />
+                          <div className="w-12 h-8 bg-violet-100 rounded-md overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            {video.thumbnail && video.media_type === "VIDEO" ? (
+                              <video
+                                src={video.thumbnail}
+                                className="w-full h-full object-cover"
+                                muted
+                              />
+                            ) : video.thumbnail ? (
+                              <img
+                                src={video.thumbnail}
+                                alt={video.title || "video media"}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon size={12} className="text-gray-400" />
+                            )}
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900 truncate max-w-[180px]">
@@ -267,6 +349,13 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
                       </td>
                     </tr>
                   ))}
+                  {!hasVideoMetrics && (
+                    <tr>
+                      <td colSpan={5} className="px-8 py-10 text-center text-slate-500 text-sm">
+                        No video performance metrics found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -295,7 +384,7 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
             </div>
 
             <div className="space-y-6 flex-1">
-              {trafficSources.map((source, i) => (
+              {hasTrafficMetrics && safeTrafficSources.map((source, i) => (
                 <div key={i}>
                   <div className="flex justify-between text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-tighter">
                     <span>{source.label}</span>
@@ -309,9 +398,17 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources }) => {
                   </div>
                 </div>
               ))}
+              {!hasTrafficMetrics && (
+                <div className="rounded-xl border border-blue-100 bg-white px-4 py-6 text-center text-sm text-slate-500">
+                  No traffic source metrics found.
+                </div>
+              )}
             </div>
 
-            <button className="mt-8 pt-6 border-t border-gray-50 flex justify-center items-center gap-2 text-[10px] font-bold text-violet-600 hover:underline">
+            <button
+              onClick={handleExport}
+              className="mt-8 pt-6 border-t border-gray-50 flex justify-center items-center gap-2 text-[10px] font-bold text-violet-600 hover:underline"
+            >
               <PlayCircle size={14} /> Watch Retention Report
             </button>
           </div>
