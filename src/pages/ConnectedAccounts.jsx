@@ -1,9 +1,5 @@
-import { useEffect, useState } from "react";
-import {
-  PlusIcon,
-  ArrowPathIcon,
-  ShieldCheckIcon,
-} from "@heroicons/react/24/outline";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   socialList,
   refreshAccount,
@@ -19,25 +15,54 @@ function ConnectedAccounts() {
   const [showModal, setShowModal] = useState(false);
   const [disconnectTarget, setDisconnectTarget] = useState(null);
   const [disconnectLoading, setDisconnectLoading] = useState(false);
+  const [syncingMeta, setSyncingMeta] = useState(false);
+
+  const fetchAccounts = useCallback(async () => {
+    try {
+      const data = await socialList();
+      const list = data.data || [];
+      setAccounts(list);
+      setError(null);
+
+      const hasMeta = list.some((acc) => acc.provider === "meta");
+      const hasInstagramTarget = list.some((acc) =>
+        (acc.publishing_targets || []).some((target) => target.provider === "instagram"),
+      );
+      setSyncingMeta(hasMeta && !hasInstagramTarget);
+    } catch {
+      setError("Failed to load accounts");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const data = await socialList();
-        setAccounts(data.data || []);
-      } catch (err) {
-        setError("Failed to load accounts");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchAccounts();
-  }, []);
+  }, [fetchAccounts]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      fetchAccounts();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchAccounts]);
+
+  useEffect(() => {
+    if (!syncingMeta) return;
+    const timer = setInterval(() => {
+      fetchAccounts();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [syncingMeta, fetchAccounts]);
 
   const handleRefresh = async (accountId) => {
     try {
       await refreshAccount(accountId);
       toast.success("Refresh triggered");
+      setTimeout(() => {
+        fetchAccounts();
+      }, 1200);
     } catch (err) {
       console.error(err);
       toast.error("Failed to refresh");
@@ -48,8 +73,6 @@ function ConnectedAccounts() {
     setDisconnectLoading(true);
     try {
       await disconnectAccount(accountId);
-
-      // update UI
       setAccounts((prev) => prev.filter((acc) => acc.id !== accountId));
       toast.success("Account disconnected");
       setDisconnectTarget(null);
@@ -71,15 +94,19 @@ function ConnectedAccounts() {
     return Math.max(0, Math.min(100, Math.round(percentage)));
   };
 
+  const flattenedTargets = useMemo(
+    () =>
+      accounts.flatMap((account) =>
+        (account.publishing_targets || []).map((target) => ({
+          ...target,
+          parentAccount: account,
+        })),
+      ),
+    [accounts],
+  );
+
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
-
-  const flattenedTargets = accounts.flatMap((account) =>
-    (account.publishing_targets || []).map((target) => ({
-      ...target,
-      parentAccount: account,
-    })),
-  );
 
   const healthy = flattenedTargets.filter(
     (t) => calculateTokenHealth(t.parentAccount.token_expires_at) > 60,
@@ -93,20 +120,26 @@ function ConnectedAccounts() {
     <div className="space-y-8">
       <ConnectAccountModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          fetchAccounts();
+        }}
       />
 
-      {/* Header */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-semibold">Connected Accounts</h1>
           <p className="text-sm text-gray-500 mt-1">
             Manage your organization's social platform integrations.
           </p>
+          {syncingMeta && (
+            <p className="text-xs text-amber-600 mt-2">
+              Meta pages are connected. Instagram targets are syncing and should appear shortly.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-6">
         <SummaryCard title="Healthy" value={healthy} />
         <SummaryCard title="Alerts" value={alerts} />
@@ -114,7 +147,6 @@ function ConnectedAccounts() {
         <SummaryCard title="Platforms" value={accounts.length} />
       </div>
 
-      {/* Account Grid */}
       <div className="grid grid-cols-3 gap-6">
         {flattenedTargets.map((target) => {
           const tokenHealth = calculateTokenHealth(
@@ -149,7 +181,7 @@ function ConnectedAccounts() {
                 </div>
 
                 <p className="text-xs text-gray-400 mt-2">
-                  Expires on{" "}
+                  Expires on {" "}
                   {new Date(
                     target.parentAccount.token_expires_at,
                   ).toLocaleDateString()}
@@ -163,9 +195,6 @@ function ConnectedAccounts() {
                 >
                   Refresh
                 </button>
-                {/* <button className="text-sm text-gray-600 hover:text-gray-900">
-                  Settings
-                </button> */}
                 <button
                   onClick={() =>
                     setDisconnectTarget({
@@ -182,7 +211,6 @@ function ConnectedAccounts() {
           );
         })}
 
-        {/* Add New Card */}
         <div
           onClick={() => setShowModal(true)}
           className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-600 transition"
@@ -191,30 +219,6 @@ function ConnectedAccounts() {
           <p className="text-sm text-gray-600">Connect New Account</p>
         </div>
       </div>
-
-      {/* Help Section */}
-      {/* <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 flex justify-between items-center">
-        <div>
-          <h3 className="font-medium">
-            Need help with integrations?
-          </h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Learn how to manage enterprise scopes and troubleshoot authentication errors.
-          </p>
-        </div>
-
-        <div className="flex gap-3">
-          <button className="border border-gray-300 px-4 py-2 rounded-lg text-sm">
-            Integration Guide
-          </button>
-          <button className="border border-gray-300 px-4 py-2 rounded-lg text-sm">
-            API Reference
-          </button>
-          <button className="border border-gray-300 px-4 py-2 rounded-lg text-sm">
-            Contact Support
-          </button>
-        </div>
-      </div> */}
 
       <ConfirmDisconnectModal
         isOpen={Boolean(disconnectTarget)}

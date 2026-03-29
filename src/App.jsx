@@ -22,6 +22,9 @@ import Analytics from "./pages/Analytics";
 // import CreateSchedulePage from "./pages/CreateSchedulePage";
 import News from "./pages/News";
 import Settings from "./pages/Settings";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import LegalConsentBanner from "./components/legal/LegalConsentBanner";
 
 function App() {
   return (
@@ -40,8 +43,11 @@ function App() {
       />
 
       <Router>
+        <LegalConsentBanner />
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
           <Route
             path="/register"

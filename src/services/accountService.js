@@ -2,7 +2,7 @@ import api from "./api";
 
 // List connected social accounts
 export const socialList = () => {
-  return api.get("/social/");
+  return api.get("/social/", { params: { t: Date.now() } });
 };
 
 

@@ -55,7 +55,9 @@ export const getSocialAccounts = () => {
 };
 
 
-export const getPublishingTargets = () => {
-  return API.get("/social/publishing-targets/");
+export const getPublishingTargets = (page = 1) => {
+  return API.get("/social/publishing-targets/", {
+    params: { page, t: Date.now() },
+  });
 };
 

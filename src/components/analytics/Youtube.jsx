@@ -201,7 +201,10 @@ const YouTubeAnalytics = ({ overview, growth, videos, trafficSources, onRefresh 
               </p>
             </div>
             <div className="flex bg-gray-50 p-1 rounded-lg">
-              <button className="px-3 py-1 bg-white text-[10px] font-bold rounded-md shadow-sm">
+              <button
+                onClick={() => toast.info("Daily view is currently active.")}
+                className="px-3 py-1 bg-white text-[10px] font-bold rounded-md shadow-sm"
+              >
                 Daily
               </button>
             </div>

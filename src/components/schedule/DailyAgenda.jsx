@@ -1,46 +1,35 @@
-import { useEffect, useState } from "react";
-import { getPosts } from "../../services/postService"; // adjust if needed
+export default function DailyAgenda({ posts = [], selectedDate }) {
+  const activeDate = selectedDate || new Date();
 
-export default function DailyAgenda() {
-  const [posts, setPosts] = useState([]);
-
-  const today = new Date();
-
-  const formatDate = today.toLocaleDateString("en-US", {
+  const formatDate = activeDate.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 
-  useEffect(() => {
-    async function fetchPosts() {
-      try {
-        const res = await getPosts(); // your API
-        const allPosts = res.data.results || [];
-
-        console.log(res.data.results);
-        const todayPosts = allPosts.filter((post) => {
-          return post.platforms?.some((p) => {
-            if (!p.scheduled_time) return false;
-
-            const date = new Date(p.scheduled_time);
-
-            return (
-              date.getDate() === today.getDate() &&
-              date.getMonth() === today.getMonth() &&
-              date.getFullYear() === today.getFullYear()
-            );
-          });
-        });
-        console.log(todayPosts);
-        setPosts(todayPosts);
-      } catch (err) {
-        console.error("Failed to load posts", err);
-      }
-    }
-
-    fetchPosts();
-  }, []);
+  const agendaItems = (posts || [])
+    .flatMap((post) =>
+      (post.platforms || []).map((platform) => ({
+        postId: post.id,
+        platformId: platform.id,
+        caption: platform.caption || post.caption || "",
+        provider: platform.provider || "unknown",
+        publishStatus: platform.publish_status || "pending",
+        scheduledTime: platform.scheduled_time,
+      })),
+    )
+    .filter((item) => {
+      if (!item.scheduledTime) return false;
+      const date = new Date(item.scheduledTime);
+      return (
+        date.getDate() === activeDate.getDate() &&
+        date.getMonth() === activeDate.getMonth() &&
+        date.getFullYear() === activeDate.getFullYear()
+      );
+    })
+    .sort(
+      (a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime(),
+    );
 
   return (
     <div className="h-full overflow-y-auto p-6 bg-transparent rounded-xl">
@@ -50,16 +39,15 @@ export default function DailyAgenda() {
       </div>
 
       <p className="text-sm text-gray-500 mb-6">
-        You have {posts.length} posts scheduled for today.
+        You have {agendaItems.length} posts scheduled for this day.
       </p>
 
       <div className="space-y-4">
-        {posts.length === 0 ? (
-          <div className="text-sm text-gray-400">No posts today</div>
+        {agendaItems.length === 0 ? (
+          <div className="text-sm text-gray-400">No posts scheduled</div>
         ) : (
-          posts.map((post, i) =>
-            post.platforms.map((p, idx) => {
-              const date = new Date(p.scheduled_time);
+          agendaItems.map((item) => {
+              const date = new Date(item.scheduledTime);
 
               const time = date.toLocaleTimeString([], {
                 hour: "2-digit",
@@ -68,26 +56,24 @@ export default function DailyAgenda() {
 
               return (
                 <div
-                  key={`${i}-${idx}`}
+                  key={`${item.postId}-${item.platformId}`}
                   className="p-4 border border-gray-200 rounded-xl bg-gray-50"
                 >
                   <div className="text-xs text-gray-500">{time}</div>
                   <div className="mt-1 font-medium text-gray-900">
-                    {p.caption.slice(0,100) || "Untitled Post"}
+                    {item.caption.slice(0, 100) || "Untitled Post"}
                   </div>
                   <div className="flex gap-4">
-                  <div className="text-xs text-blue-600 mt-1">
-                    {p.publish_status}
-                  </div>
-                  <div className="flex text-xs justify-end text-blue-600 mt-1">
-                    {p.provider.charAt(0).toUpperCase() + p.provider.slice(1)}
-                  </div>
-
+                    <div className="text-xs text-blue-600 mt-1">
+                      {item.publishStatus}
+                    </div>
+                    <div className="flex text-xs justify-end text-blue-600 mt-1">
+                      {item.provider.charAt(0).toUpperCase() + item.provider.slice(1)}
+                    </div>
                   </div>
                 </div>
               );
-            }),
-          )
+            })
         )}
       </div>
 

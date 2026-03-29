@@ -1,147 +1,220 @@
 import { useDashboardData } from "../../hooks/useDashboardData";
 import StatCard from "../../components/dashboard/StatCard";
 import IntegrationHealth from "../../components/dashboard/IntegrationHealth";
-import { TrendingUp, Calendar, AlertCircle, Zap, ArrowUpRight, Newspaper, Image as ImageIcon } from "lucide-react";
+import {
+  TrendingUp,
+  Calendar,
+  AlertCircle,
+  Zap,
+  Newspaper,
+  Image as ImageIcon,
+  RefreshCcw,
+  CheckCircle2,
+  Clock3,
+} from "lucide-react";
+
+const formatNumber = (value) => Number(value || 0).toLocaleString();
+
+const formatPercent = (value) => `${Number(value || 0).toFixed(2)}%`;
+
+const growthLabel = (value) => {
+  const numeric = Number(value || 0);
+  const sign = numeric > 0 ? "+" : "";
+  return `${sign}${numeric.toFixed(2)}%`;
+};
+
+const statusPill = (status) => {
+  if (status === "success") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (status === "failed") return "bg-rose-50 text-rose-700 border-rose-200";
+  if (status === "processing") return "bg-amber-50 text-amber-700 border-amber-200";
+  return "bg-slate-100 text-slate-700 border-slate-200";
+};
 
 function Overview() {
-  const data = useDashboardData();
+  const { data, loading, error, refresh } = useDashboardData();
 
-  if (!data) return (
-    <div className="flex h-[80vh] items-center justify-center text-slate-400 font-medium animate-pulse">
-      Loading system metrics...
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex h-[70vh] items-center justify-center text-slate-500 font-medium">
+        Loading dashboard...
+      </div>
+    );
+  }
 
-  return (
-    <div className="flex flex-col gap-8 font-sans">
-      
-      {/* TOP HEADER */}
-      <div className="flex justify-between items-center w-full">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Analytics Hub</h1>
-          <p className="text-slate-500 text-sm mt-1">Real-time performance across your integrated platforms.</p>
-        </div>
-        <button className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 active:scale-95 transition-all">
-          Generate Report
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">
+        <p className="font-semibold">{error}</p>
+        <button
+          onClick={refresh}
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700"
+        >
+          <RefreshCcw size={14} />
+          Retry
         </button>
       </div>
+    );
+  }
 
-      <div className="w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        {/* STATS SECTION */}
-        <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Reach"
-            value={data.stats?.reach?.toLocaleString() || "0"}
-            icon={<TrendingUp size={18} className="text-blue-600" />}
-            growth="+12.4%"
-          />
-          <StatCard
-            title="Avg. Engagement"
-            value={`${data.stats?.engagement_rate || 0}%`}
-            icon={<Zap size={18} className="text-blue-600" />}
-            growth="+2.1%"
-          />
-          <StatCard
-            title="Planned Content"
-            value={data.posts?.scheduled || 0}
-            icon={<Calendar size={18} className="text-blue-600" />}
-            growth="0"
-          />
-          <StatCard
-            title="System Errors"
-            value={data.posts?.failed || 0}
-            icon={<AlertCircle size={18} className="text-red-500" />}
-            growth={data.posts?.failed > 0 ? "+1" : "0"}
-            className={data.posts?.failed > 0 ? "border-red-200" : ""}
-          />
+  const updatedAt = data?.updated_at
+    ? new Date(data.updated_at).toLocaleString()
+    : "Now";
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Live business snapshot from connected channels.
+            </p>
+          </div>
+          <button
+            onClick={refresh}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            <RefreshCcw size={14} />
+            Refresh
+          </button>
         </div>
+        <p className="mt-3 text-xs text-slate-400">Last updated: {updatedAt}</p>
+      </div>
 
-        {/* FEED PERFORMANCE (LEFT) */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Top Performing Feed</h3>
-              <span className="text-xs font-bold text-blue-600 cursor-pointer">View All</span>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Reach (Last 7 Days)"
+          value={formatNumber(data?.stats?.reach)}
+          icon={<TrendingUp size={18} className="text-blue-600" />}
+          growth={growthLabel(data?.trend?.reach_pct)}
+        />
+        <StatCard
+          title="Engagement Rate"
+          value={formatPercent(data?.stats?.engagement_rate)}
+          icon={<Zap size={18} className="text-fuchsia-600" />}
+          growth={growthLabel(data?.trend?.engagement_rate_delta)}
+        />
+        <StatCard
+          title="Scheduled Posts"
+          value={formatNumber(data?.posts?.scheduled)}
+          icon={<Calendar size={18} className="text-emerald-600" />}
+          growth={growthLabel(data?.trend?.engagement_pct)}
+        />
+        <StatCard
+          title="Failed (30 Days)"
+          value={formatNumber(data?.posts?.failed_30d)}
+          icon={<AlertCircle size={18} className="text-rose-600" />}
+          growth={data?.posts?.failed_30d > 0 ? `${data.posts.failed_30d}` : "0"}
+          className={data?.posts?.failed_30d > 0 ? "border-rose-200" : ""}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="xl:col-span-8 space-y-6">
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-6 py-4">
+              <h3 className="text-sm font-semibold text-slate-900">Top Performing Posts</h3>
             </div>
-            
-            <div className="divide-y divide-slate-50">
-              {data.top_posts?.map((post, i) => (
-                <div key={i} className="p-6 hover:bg-slate-50/50 transition-all flex items-center gap-6 group">
-                  {/* Mock Post Thumbnail */}
-                  <div className="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 shrink-0 overflow-hidden border border-slate-100">
-                    {post.image ? <img src={post.image} alt="" className="object-cover w-full h-full" /> : <ImageIcon size={20} />}
+            <div className="divide-y divide-slate-100">
+              {(data?.top_posts || []).length === 0 && (
+                <div className="p-6 text-sm text-slate-500">No post analytics available yet.</div>
+              )}
+              {(data?.top_posts || []).map((post, i) => (
+                <div key={`${post.title}-${i}`} className="flex items-center gap-4 px-6 py-4">
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
+                    {post.thumbnail ? (
+                      <img src={post.thumbnail} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <ImageIcon size={18} />
+                    )}
                   </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-slate-800 text-base truncate group-hover:text-blue-600 transition-colors">
-                      {post.title || "Untitled Performance Update"}
-                    </h4>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 rounded text-slate-500 uppercase">{post.platform}</span>
-                      <span className="text-sm text-slate-400 font-medium">{post.engagement} interactions</span>
-                    </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-900">{post.title}</p>
+                    <p className="mt-1 text-xs text-slate-500 capitalize">
+                      {post.platform} · {formatNumber(post.engagement)} engagements ·{" "}
+                      {formatPercent(post.engagement_rate)}
+                    </p>
                   </div>
-
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-green-600 font-bold text-sm">
-                      <ArrowUpRight size={14} />
-                      {((post.engagement / 100) * 5).toFixed(1)}%
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-300 uppercase">Velocity</span>
+                  <div className="text-right text-xs text-slate-500">
+                    <p className="font-semibold text-slate-900">{formatNumber(post.impressions)}</p>
+                    <p>Reach</p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             {/* NEWS FEED */}
-             <div className="bg-white border border-slate-200 rounded-3xl p-8">
-                <div className="flex items-center gap-2 mb-6">
-                  <Newspaper size={16} className="text-blue-600" />
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Industry Intelligence</h3>
-                </div>
-                <div className="space-y-6">
-                  {data.news?.map((n, i) => (
-                    <a key={i} href={n.url} className="block group">
-                      <p className="text-sm font-bold text-slate-800 group-hover:text-blue-600 leading-snug">{n.title}</p>
-                      <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase group-hover:text-slate-600 transition-colors">Read Brief &rarr;</p>
-                    </a>
-                  ))}
-                </div>
-             </div>
-
-             {/* ACTIVITY LOG */}
-             <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
-                <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6 relative z-10">System Status</h3>
-                <div className="space-y-4 relative z-10">
-                  {data.recent_posts?.slice(0, 3).map((post, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${post.status === 'published' ? 'bg-green-400' : 'bg-blue-400'}`} />
-                      <span className="text-sm font-medium text-slate-300 truncate">{post.title}</span>
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <Clock3 size={16} className="text-slate-600" />
+                <h3 className="text-sm font-semibold text-slate-900">Recent Publishing Activity</h3>
+              </div>
+              <div className="space-y-3">
+                {(data?.recent_posts || []).length === 0 && (
+                  <p className="text-sm text-slate-500">No recent activity yet.</p>
+                )}
+                {(data?.recent_posts || []).map((post, i) => (
+                  <div key={`${post.title}-${i}`} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-800">{post.title || "Untitled Post"}</p>
+                      <p className="text-xs capitalize text-slate-500">{post.platform}</p>
                     </div>
-                  ))}
-                </div>
-                <Zap size={100} className="absolute -right-8 -bottom-8 text-white/5 -rotate-12" />
-             </div>
-          </div>
+                    <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold capitalize ${statusPill(post.status)}`}>
+                      {post.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <Newspaper size={16} className="text-slate-600" />
+                <h3 className="text-sm font-semibold text-slate-900">Industry Feed</h3>
+              </div>
+              <div className="space-y-3">
+                {(data?.news || []).length === 0 && (
+                  <p className="text-sm text-slate-500">No industry updates available.</p>
+                )}
+                {(data?.news || []).map((item, i) => (
+                  <a
+                    key={`${item.title}-${i}`}
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-lg border border-slate-100 px-3 py-2 text-sm text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    {item.title}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-2">
-            <IntegrationHealth integrations={data.integrations || {}} />
+        <div className="xl:col-span-4 space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <IntegrationHealth integrations={data?.integrations || {}} />
           </div>
-          
-          <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl">
-            <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Optimization</h4>
-            <p className="text-sm text-blue-900 font-medium leading-relaxed">
-              Your engagement peaks on <span className="font-bold">Tuesdays</span>. Schedule your next big launch for tomorrow at 11:30 AM.
-            </p>
+
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-700" />
+              <p className="text-sm font-semibold text-emerald-900">Publishing Snapshot</p>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-white px-3 py-2">
+                <p className="text-xs text-slate-500">Published (30d)</p>
+                <p className="text-lg font-semibold text-slate-900">{formatNumber(data?.posts?.published_30d)}</p>
+              </div>
+              <div className="rounded-lg bg-white px-3 py-2">
+                <p className="text-xs text-slate-500">Processing</p>
+                <p className="text-lg font-semibold text-slate-900">{formatNumber(data?.posts?.processing)}</p>
+              </div>
+            </div>
           </div>
         </div>
-
       </div>
     </div>
   );

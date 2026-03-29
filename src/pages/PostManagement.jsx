@@ -1,14 +1,16 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getPosts,
   deletePost,
   getPostDetail,
+  restorePost,
 } from "../services/postService";
 import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-// S3 already returns full https:// URLs â€” no prefix needed
+// S3 already returns full https:// URLs — no prefix needed
 
-import { toast } from "sonner"; 
+import { toast } from "sonner";
+import { exportRowsToCsv } from "../services/csvExport";
 const platformIcons = {
   linkedin: "https://img.icons8.com/color/24/linkedin.png",
   instagram: "https://img.icons8.com/color/24/instagram-new--v1.png",
@@ -26,6 +28,7 @@ export default function PostsPage() {
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(0);
+  const [dateRangeMode, setDateRangeMode] = useState("all");
   const navigate = useNavigate();
   const pageSize = 10;
   const totalPages = Math.ceil(count / pageSize);
@@ -61,6 +64,43 @@ export default function PostsPage() {
     return () => clearTimeout(delay);
   }, [search, platform, status]);
 
+  const visiblePosts = useMemo(() => {
+    if (dateRangeMode === "all") return posts;
+
+    const now = new Date();
+    const threshold = new Date();
+    threshold.setDate(now.getDate() - 7);
+
+    return posts.filter((post) =>
+      (post.platforms || []).some((platformItem) => {
+        if (!platformItem?.scheduled_time) return false;
+        const dt = new Date(platformItem.scheduled_time);
+        return dt >= threshold;
+      }),
+    );
+  }, [posts, dateRangeMode]);
+
+  const handleExportCsv = () => {
+    const rows = visiblePosts.map((post) => {
+      const p = post.platforms?.[0] || {};
+      return {
+        post_id: post.id,
+        platform: p.provider || "",
+        caption: p.caption || "",
+        status: p.publish_status || "",
+        scheduled_time: p.scheduled_time || "",
+      };
+    });
+
+    const ok = exportRowsToCsv("post-management.csv", rows);
+    if (ok) toast.success("Posts CSV downloaded.");
+    else toast.info("No post data available to export.");
+  };
+
+  const toggleDateRange = () => {
+    setDateRangeMode((prev) => (prev === "all" ? "last7" : "all"));
+  };
+
   const handleDelete = async (postId) => {
     try {
       await deletePost(postId);
@@ -85,7 +125,10 @@ export default function PostsPage() {
       const res = await getPostDetail(postId);
 
       setSelectedPost(res.data);
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to load post details", err);
+      toast.error("Failed to load post details.");
+    }
   };
 
   if (loading) {
@@ -108,7 +151,10 @@ export default function PostsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button
+            onClick={handleExportCsv}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
             Export CSV
           </button>
           <button
@@ -187,8 +233,11 @@ export default function PostsPage() {
             <option value="success">Success</option>
             <option value="failed">Failed</option>
           </select>
-          <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-            Date Range
+          <button
+            onClick={toggleDateRange}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+          >
+            {dateRangeMode === "all" ? "Date Range: All" : "Date Range: Last 7 Days"}
           </button>
           <button
             onClick={() => {
@@ -220,7 +269,7 @@ export default function PostsPage() {
             </thead>
 
             <tbody className="divide-y divide-blue-50">
-              {posts.map((post) => {
+              {visiblePosts.map((post) => {
                 const platform = post.platforms?.[0] || {};
                 const media = platform.media?.[0];
                 const provider = platform.provider?.toLowerCase() || "";
@@ -350,7 +399,7 @@ export default function PostsPage() {
                 );
               })}
 
-              {!posts.length && (
+              {!visiblePosts.length && (
                 <tr>
                   <td colSpan={6} className="px-5 py-14 text-center">
                     <p className="text-sm font-medium text-gray-600">No posts found</p>
@@ -628,5 +677,6 @@ function ConfirmActionModal({
     </div>
   );
 }
+
 
 

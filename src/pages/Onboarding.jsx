@@ -10,6 +10,7 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
+import { BRAND_LOGO, BRAND_NAME } from "../config/brand";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -55,11 +56,9 @@ export default function Onboarding() {
       {/* Top Navbar */}
       <div className="flex justify-between items-center px-8 py-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-white rotate-45"></div>
-          </div>
+          <img src={BRAND_LOGO} alt={BRAND_NAME} className="w-8 h-8 rounded-lg" />
           <span className="font-semibold text-gray-800">
-            Marketing Fusion Platform
+            {BRAND_NAME}
           </span>
         </div>
 
@@ -175,7 +174,7 @@ export default function Onboarding() {
       </div>
 
       <footer className="text-center text-xs text-gray-400 py-4">
-        © 2026 Marketing Fusion Platform. All rights reserved.
+        {`© 2026 ${BRAND_NAME}. All rights reserved.`}
       </footer>
     </div>
   );

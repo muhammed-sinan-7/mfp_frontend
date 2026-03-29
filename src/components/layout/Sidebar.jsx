@@ -12,6 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { BarChart3 } from "lucide-react";
+import { BRAND_LOGO, BRAND_NAME } from "../../config/brand";
 function Sidebar() {
   const navItems = [
     { name: "Dashboard", icon: HomeIcon, path: "/overview" },
@@ -33,7 +34,15 @@ function Sidebar() {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between">
       <div>
-        <div className="px-6 py-5 text-xl font-semibold text-blue-600">MFP</div>
+        <div className="px-6 py-5">
+          <div className="flex items-center gap-3">
+            <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-14 w-11 rounded-xl" />
+            <div>
+              <p className="text-lg font-semibold text-blue-700 leading-none">{BRAND_NAME}</p>
+              <p className="text-[11px] text-gray-500 mt-1">One Place, All Platforms</p>
+            </div>
+          </div>
+        </div>
 
         <nav className="px-4 space-y-1">
           {navItems.map((item) => (

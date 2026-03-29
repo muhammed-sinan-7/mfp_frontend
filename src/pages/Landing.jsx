@@ -1,5 +1,6 @@
-import { useNavigate } from "react-router-dom";
-import { Sparkles, ArrowRight, PlayCircle, ShieldCheck, BarChart3, CalendarClock, Layers3 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Sparkles, ArrowRight, PlayCircle, ShieldCheck, BarChart3, CalendarClock } from "lucide-react";
+import { BRAND_LOGO, BRAND_NAME, BRAND_TAGLINE } from "../config/brand";
 
 const platformLogos = [
   {
@@ -72,12 +73,10 @@ export default function LandingPage() {
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
-              <Layers3 className="h-6 w-6 text-white" />
-            </div>
+            <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-11 w-11 rounded-2xl shadow-lg shadow-blue-200" />
             <div>
-              <p className="text-lg font-semibold tracking-tight">MFP</p>
-              <p className="text-xs text-slate-500">Marketing Fusion Platform</p>
+              <p className="text-lg font-semibold tracking-tight">{BRAND_NAME}</p>
+              <p className="text-xs text-slate-500">{BRAND_TAGLINE}</p>
             </div>
           </div>
 
@@ -161,6 +160,12 @@ export default function LandingPage() {
           ))}
         </section>
       </main>
+
+      <footer className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-slate-500 flex items-center gap-3">
+        <Link to="/terms" className="hover:text-blue-600 hover:underline">Terms</Link>
+        <span>•</span>
+        <Link to="/privacy" className="hover:text-blue-600 hover:underline">Privacy</Link>
+      </footer>
     </div>
   );
 }

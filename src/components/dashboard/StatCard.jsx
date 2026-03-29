@@ -1,8 +1,17 @@
 import React from "react";
 
 function StatCard({ title, value, growth, icon, className = "" }) {
-  // Safety check to prevent the "Cannot read properties of undefined" error
-  const isPositive = growth?.includes("+");
+  const normalizedGrowth = String(growth ?? "").trim();
+  const isPositive = normalizedGrowth.startsWith("+");
+  const isNegative =
+    normalizedGrowth.startsWith("-") &&
+    normalizedGrowth !== "-0" &&
+    normalizedGrowth !== "-0%";
+  const growthClass = isPositive
+    ? "bg-green-50 text-green-600"
+    : isNegative
+      ? "bg-red-50 text-red-600"
+      : "bg-slate-100 text-slate-600";
 
   return (
     <div className={`bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group ${className}`}>
@@ -10,11 +19,9 @@ function StatCard({ title, value, growth, icon, className = "" }) {
         <div className="p-2 bg-slate-50 rounded-lg group-hover:bg-blue-50 transition-colors">
           {icon}
         </div>
-        {growth && (
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-            isPositive ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-          }`}>
-            {growth}
+        {normalizedGrowth && (
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${growthClass}`}>
+            {normalizedGrowth}
           </span>
         )}
       </div>

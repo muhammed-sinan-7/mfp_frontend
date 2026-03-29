@@ -1,17 +1,18 @@
 import { format } from "date-fns";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import CalendarGrid from "./CalenderGrid";
-import { useState } from "react";
+import { toast } from "sonner";
 export default function CalendarSection({
   currentMonth,
   onPrev,
   onNext,
   events,
+  filterStatus,
+  onFilterChange,
+  onRefresh,
   selectedDate,
-  onDateSelect
+  onDateSelect,
 }) {
- 
-
   return (
     <div className="flex flex-col h-full p-8">
       {/* HEADER */}
@@ -28,10 +29,18 @@ export default function CalendarSection({
       <div className="flex items-center justify-between mb-6">
         {/* LEFT TOGGLE */}
         <div className="flex items-center bg-gray-100 rounded-lg p-1">
-          <button className="px-4 py-1.5 text-sm font-medium bg-white rounded-md shadow-sm">
+          <button
+            onClick={() => toast.info("You are already in month view.")}
+            className="px-4 py-1.5 text-sm font-medium bg-white rounded-md shadow-sm"
+          >
             Month
           </button>
-          <button className="px-4 py-1.5 text-sm text-gray-600">Week</button>
+          <button
+            onClick={() => toast.info("Week view will be enabled soon.")}
+            className="px-4 py-1.5 text-sm text-gray-600"
+          >
+            Week
+          </button>
         </div>
 
         {/* RIGHT CONTROLS */}
@@ -57,9 +66,25 @@ export default function CalendarSection({
             </button>
           </div>
 
-          <button className="px-4 py-2 text-sm border border-gray-200 bg-white rounded-lg shadow-sm hover:bg-gray-50">
-            Filters
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={filterStatus}
+              onChange={(e) => onFilterChange?.(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-200 bg-white rounded-lg shadow-sm outline-none"
+            >
+              <option value="all">All</option>
+              <option value="pending">Scheduled</option>
+              <option value="processing">Processing</option>
+              <option value="success">Published</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button
+              onClick={onRefresh}
+              className="px-4 py-2 text-sm border border-gray-200 bg-white rounded-lg shadow-sm hover:bg-gray-50"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 

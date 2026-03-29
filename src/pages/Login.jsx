@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { loginSchema } from "../validation/loginSchema";
 import { loginUser } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
+import { BRAND_LOGO, BRAND_NAME } from "../config/brand";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -63,74 +64,68 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-        <div className="flex justify-center mb-6">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-white rotate-45"></div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/95 p-8 shadow-2xl shadow-blue-100 backdrop-blur">
+        <div className="mb-6 flex flex-col items-center">
+          <img src={BRAND_LOGO} alt={BRAND_NAME} className="w-14 h-[68px] object-contain" />
         </div>
 
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900">Sign in to MFP</h2>
-          <p className="text-sm text-gray-500 mt-2">
-            Enter your credentials to access your marketing dashboard
+        <div className="mb-7 text-center">
+          <h2 className="text-2xl font-semibold text-slate-900">Welcome back</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Sign in to continue managing all your social channels.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Email Address</label>
             <div className="relative">
-              <EnvelopeIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <EnvelopeIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="email"
                 placeholder="name@company.com"
                 {...register("email")}
-                className="w-full border border-gray-300 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
             </div>
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="mt-1 text-xs text-rose-500">{errors.email.message}</p>}
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-medium text-gray-700">Password</label>
-              <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline">
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-700">Password</label>
+              <Link to="/forgot-password" className="text-xs font-medium text-blue-600 hover:underline">
                 Forgot password?
               </Link>
             </div>
             <div className="relative">
-              <LockClosedIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <LockClosedIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="********"
                 {...register("password")}
-                className="w-full border border-gray-300 rounded-lg py-3 pl-10 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-10 pr-12 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? (
-                  <EyeSlashIcon className="w-5 h-5" />
-                ) : (
-                  <EyeIcon className="w-5 h-5" />
-                )}
+                {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
               </button>
             </div>
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+            {errors.password && <p className="mt-1 text-xs text-rose-500">{errors.password.message}</p>}
           </div>
 
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="remember"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
             />
-            <label htmlFor="remember" className="text-sm text-gray-600">
+            <label htmlFor="remember" className="text-sm text-slate-600">
               Keep me signed in for 30 days
             </label>
           </div>
@@ -138,41 +133,17 @@ export default function Login() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors"
+            className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
           >
             {isSubmitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
-        <div className="my-8 flex items-center">
-          <div className="flex-grow border-t border-gray-200"></div>
-          <span className="px-3 text-xs text-gray-400 uppercase">OR CONTINUE WITH</span>
-          <div className="flex-grow border-t border-gray-200"></div>
-        </div>
-
-        <div className="mt-8 text-center text-sm text-gray-600">
-          Do not have an account yet?{" "}
-          <Link to="/register" className="text-blue-600 font-medium hover:underline">
-            Create an organization
+        <div className="mt-7 border-t border-slate-200 pt-5 text-center text-sm text-slate-600">
+          Don&apos;t have an account?{" "}
+          <Link to="/register" className="font-semibold text-blue-600 hover:underline">
+            Create workspace
           </Link>
-        </div>
-
-        <div className="mt-10 pt-6 border-t border-gray-200 text-center">
-          <div className="text-xs text-gray-400 uppercase mb-4">Systems Operational</div>
-          <div className="flex justify-center gap-8 text-sm text-gray-700">
-            <div>
-              <div className="font-semibold">99.9%</div>
-              <div className="text-xs text-gray-400">Uptime</div>
-            </div>
-            <div>
-              <div className="font-semibold">SOC2</div>
-              <div className="text-xs text-gray-400">Certified</div>
-            </div>
-            <div>
-              <div className="font-semibold">256-bit</div>
-              <div className="text-xs text-gray-400">AES</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

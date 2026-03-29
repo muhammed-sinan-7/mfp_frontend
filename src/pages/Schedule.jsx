@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { addMonths, subMonths } from "date-fns";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { addMonths, subMonths, isBefore, isSameDay, startOfDay } from "date-fns";
 import CalendarSection from "../components/schedule/CalenderSection";
 import DailyAgenda from "../components/schedule/DailyAgenda";
 import StatsFooter from "../components/schedule/StatsFooter";
@@ -8,6 +8,7 @@ import {
   getPublishingTargets,
   createPost,
   updatePost,
+  getPosts,
 } from "../services/postService";
 import PlatformSidebar from "../components/scheduler/platformSidebar";
 import PlatformEditor from "../components/scheduler/PlatformEditor";
@@ -33,8 +34,38 @@ export default function SchedulePage() {
   const [scheduledTime, setScheduledTime] = useState("");
 
   const [platformMedia, setPlatformMedia] = useState({});
+  const [calendarPosts, setCalendarPosts] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("pending");
 
   const location = useLocation();
+
+  const loadCalendarPosts = useCallback(async () => {
+    try {
+      let page = 1;
+      let hasNext = true;
+      const merged = [];
+      const filters = {};
+
+      if (statusFilter !== "all") {
+        filters["platforms__publish_status"] = statusFilter;
+      }
+
+      while (hasNext && page <= 25) {
+        const res = await getPosts(page, filters);
+        const payload = res?.data || {};
+        const rows = payload.results || [];
+        merged.push(...rows);
+
+        hasNext = Boolean(payload.next);
+        page += 1;
+      }
+
+      setCalendarPosts(merged);
+    } catch (err) {
+      console.error("Failed to load calendar posts", err);
+      toast.error("Could not load scheduled posts.");
+    }
+  }, [statusFilter]);
 
   useEffect(() => {
     const openAI = () => setAiOpen(true);
@@ -83,12 +114,34 @@ export default function SchedulePage() {
   }, [location.state]);
 
   useEffect(() => {
+    loadCalendarPosts();
+  }, [loadCalendarPosts]);
+
+  useEffect(() => {
     if (!isDrawerOpen) return;
 
     async function loadTargets() {
       try {
-        const res = await getPublishingTargets();
-        setTargets(res.data.results || []);
+        let page = 1;
+        let hasNext = true;
+        const merged = [];
+
+        while (hasNext && page <= 10) {
+          const res = await getPublishingTargets(page);
+          const payload = res?.data || {};
+
+          if (Array.isArray(payload)) {
+            merged.push(...payload);
+            hasNext = false;
+            break;
+          }
+
+          merged.push(...(payload.results || []));
+          hasNext = Boolean(payload.next);
+          page += 1;
+        }
+
+        setTargets(merged);
       } catch (err) {
         console.error("Failed to load targets", err);
       }
@@ -96,6 +149,14 @@ export default function SchedulePage() {
 
     loadTargets();
   }, [isDrawerOpen]);
+
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    if (activeTarget) return;
+    if (!targets.length) return;
+    setActiveTarget(targets[0]);
+    setSelectedTargets([targets[0].id]);
+  }, [isDrawerOpen, targets, activeTarget]);
 
   useEffect(() => {
     if (!isDrawerOpen || !selectedDate) return;
@@ -115,6 +176,20 @@ export default function SchedulePage() {
     setActiveTarget(target);
     setSelectedTargets([target.id]);
   };
+
+  const handleDateSelect = useCallback((day) => {
+    const selectedDay = startOfDay(day);
+    const today = startOfDay(new Date());
+
+    if (isBefore(selectedDay, today)) {
+      toast.warning("Past dates are not available for scheduling.");
+      return;
+    }
+
+    setSelectedDate((prev) =>
+      prev && isSameDay(prev, day) ? null : day,
+    );
+  }, []);
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -237,7 +312,6 @@ export default function SchedulePage() {
             },
           ],
         };
-        console.log("UPDATE PAYLOAD:", payload);
         await updatePost(editingPost.id, payload);
 
         toast.success("Post updated successfully.");
@@ -248,6 +322,7 @@ export default function SchedulePage() {
       setSelectedTargets([]);
       setPlatformMedia({});
       setEditingPost(null);
+      await loadCalendarPosts();
     } catch (err) {
       console.error("API ERROR:", err);
 
@@ -274,6 +349,40 @@ export default function SchedulePage() {
     }
   };
 
+  const calendarEvents = useMemo(() => {
+    const eventMap = {};
+
+    for (const post of calendarPosts) {
+      for (const platform of post.platforms || []) {
+        if (!platform?.scheduled_time) continue;
+
+        const scheduledAt = new Date(platform.scheduled_time);
+        if (Number.isNaN(scheduledAt.getTime())) continue;
+
+        const key = [
+          scheduledAt.getFullYear(),
+          String(scheduledAt.getMonth() + 1).padStart(2, "0"),
+          String(scheduledAt.getDate()).padStart(2, "0"),
+        ].join("-");
+
+        if (!eventMap[key]) {
+          eventMap[key] = new Set();
+        }
+
+        if (platform.provider) {
+          eventMap[key].add(platform.provider);
+        }
+      }
+    }
+
+    return Object.fromEntries(
+      Object.entries(eventMap).map(([dateKey, providers]) => [
+        dateKey,
+        Array.from(providers),
+      ]),
+    );
+  }, [calendarPosts]);
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -283,14 +392,18 @@ export default function SchedulePage() {
               currentMonth={currentMonth}
               onPrev={() => setCurrentMonth((prev) => subMonths(prev, 1))}
               onNext={() => setCurrentMonth((prev) => addMonths(prev, 1))}
+              filterStatus={statusFilter}
+              onFilterChange={setStatusFilter}
+              onRefresh={loadCalendarPosts}
               selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
+              onDateSelect={handleDateSelect}
+              events={calendarEvents}
             />
           </div>
         </div>
 
         <div className="w-[380px] shrink-0 border-l border-gray-200 bg-white">
-          <DailyAgenda />
+          <DailyAgenda posts={calendarPosts} selectedDate={selectedDate} />
         </div>
       </div>
 

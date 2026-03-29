@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getRecycleBinPosts,
   restorePost,
@@ -129,13 +129,6 @@ const Icons = {
   ),
 };
 
-const platformIcons = {
-  facebook: "https://img.icons8.com/color/24/facebook-new.png",
-  instagram: "https://img.icons8.com/color/24/instagram-new--v1.png",
-  twitter: "https://img.icons8.com/color/24/twitter--v1.png",
-  linkedin: "https://img.icons8.com/color/24/linkedin.png",
-};
-
 export default function RecycleBinPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,6 +137,7 @@ export default function RecycleBinPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [sortDirection, setSortDirection] = useState("desc");
 
   const loadPosts = async (pageNumber = 1) => {
     try {
@@ -227,6 +221,16 @@ export default function RecycleBinPage() {
     }
   };
 
+  const visiblePosts = useMemo(() => {
+    const list = [...posts];
+    list.sort((a, b) => {
+      const aTime = new Date(a.deleted_at || a.updated_at || 0).getTime();
+      const bTime = new Date(b.deleted_at || b.updated_at || 0).getTime();
+      return sortDirection === "desc" ? bTime - aTime : aTime - bTime;
+    });
+    return list;
+  }, [posts, sortDirection]);
+
   if (loading && page === 1) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-white">
@@ -287,9 +291,14 @@ export default function RecycleBinPage() {
               className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
             />
           </div>
-          <button className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-600 text-[13px] font-bold rounded-2xl shadow-sm hover:bg-slate-50 transition-all">
+          <button
+            onClick={() =>
+              setSortDirection((prev) => (prev === "desc" ? "asc" : "desc"))
+            }
+            className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-600 text-[13px] font-bold rounded-2xl shadow-sm hover:bg-slate-50 transition-all"
+          >
             <Icons.Calendar />
-            Date
+            Date {sortDirection === "desc" ? "Newest" : "Oldest"}
           </button>
         </div>
       </div>
@@ -319,7 +328,7 @@ export default function RecycleBinPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {posts.map((post) => (
+              {visiblePosts.map((post) => (
                 <tr
                   key={post.id}
                   className="group hover:bg-blue-50/30 transition-all"

@@ -6,6 +6,7 @@ import { verifyOtp, resendOtp } from "../services/authService";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ShieldCheckIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
+import { BRAND_LOGO, BRAND_NAME } from "../config/brand";
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
@@ -25,11 +26,6 @@ export default function VerifyOtp() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  if (!email && typeof window !== "undefined") {
-    navigate("/register");
-    return null;
-  }
-
   const {
     register,
     handleSubmit,
@@ -37,6 +33,16 @@ export default function VerifyOtp() {
   } = useForm({
     resolver: zodResolver(otpSchema),
   });
+
+  useEffect(() => {
+    if (!email && typeof window !== "undefined") {
+      navigate("/register");
+    }
+  }, [email, navigate]);
+
+  if (!email) {
+    return null;
+  }
 
   const onSubmit = async (data) => {
     setServerError(null);
@@ -65,10 +71,8 @@ export default function VerifyOtp() {
 
       {/* Top Logo */}
       <div className="absolute top-10 flex items-center gap-2">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-          <div className="w-4 h-4 border-2 border-white rounded-sm rotate-45"></div>
-        </div>
-        <span className="text-2xl font-black tracking-tight text-slate-800">MFP</span>
+        <img src={BRAND_LOGO} alt={BRAND_NAME} className="w-10 h-10 rounded-xl shadow-lg shadow-blue-200" />
+        <span className="text-2xl font-black tracking-tight text-slate-800">{BRAND_NAME}</span>
       </div>
 
       <div className="relative z-10 w-full max-w-md px-6">
