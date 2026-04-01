@@ -12,36 +12,36 @@ import { BRAND_LOGO, BRAND_NAME, BRAND_TAGLINE } from "../config/brand";
 const platformLogos = [
   {
     name: "Instagram",
-    logo: "https://img.icons8.com/3d-fluency/1200/instagram-new.png",
+    logo: "https://img.icons8.com/3d-fluency/512/instagram-new.png",
     sizeClass: "w-32 lg:w-48 xl:w-56",
-    posClass: "top-2 left-6 lg:top-2 lg:left-10",
+    posClass: "top-[-12px] left-[-8px] lg:top-2 lg:left-10",
     rotate: "-rotate-[16deg]",
     z: "z-40",
     shadow: "drop-shadow-[0_22px_18px_rgba(15,23,42,0.28)]",
   },
   {
     name: "Facebook",
-    logo: "https://img.icons8.com/3d-fluency/1200/facebook-logo.png",
+    logo: "https://img.icons8.com/3d-fluency/512/facebook-logo.png",
     sizeClass: "w-24 lg:w-40 xl:w-44",
-    posClass: "top-8 right-6 lg:top-20 lg:right-8",
+    posClass: "top-4 right-[-12px] lg:top-20 lg:right-8",
     rotate: "rotate-[10deg]",
     z: "z-20",
     shadow: "drop-shadow-[0_18px_15px_rgba(15,23,42,0.24)]",
   },
   {
     name: "YouTube",
-    logo: "https://img.icons8.com/3d-fluency/1200/youtube-play.png",
+    logo: "https://img.icons8.com/3d-fluency/512/youtube-play.png",
     sizeClass: "w-36 lg:w-56 xl:w-64",
-    posClass: "bottom-2 left-12 lg:bottom-2 lg:left-16",
+    posClass: "bottom-[-6px] left-[24%] lg:bottom-2 lg:left-16",
     rotate: "-rotate-[7deg]",
     z: "z-50",
     shadow: "drop-shadow-[0_26px_20px_rgba(15,23,42,0.3)]",
   },
   {
     name: "LinkedIn",
-    logo: "https://img.icons8.com/3d-fluency/1200/linkedin--v1.png",
+    logo: "https://img.icons8.com/3d-fluency/512/linkedin--v1.png",
     sizeClass: "w-24 lg:w-40 xl:w-44",
-    posClass: "bottom-4 right-8 lg:bottom-8 lg:right-8",
+    posClass: "bottom-[-8px] right-[8%] lg:bottom-8 lg:right-8",
     rotate: "rotate-[18deg]",
     z: "z-30",
     shadow: "drop-shadow-[0_20px_16px_rgba(15,23,42,0.26)]",
@@ -108,14 +108,14 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between gap-6 px-4 py-5 sm:px-6 sm:py-8 lg:grid lg:h-[calc(100dvh-7.5rem)] lg:grid-cols-2 lg:items-center lg:gap-8 lg:py-6">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between gap-5 px-4 py-4 sm:px-6 sm:py-7 lg:grid lg:h-[calc(100dvh-7.5rem)] lg:grid-cols-2 lg:items-center lg:gap-8 lg:py-6">
         <section className="order-2 lg:order-1">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 sm:mb-4 sm:px-4 sm:text-xs">
             <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Social Command Center
           </div>
 
-          <h1 className="max-w-xl text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
+          <h1 className="max-w-xl text-[1.9rem] font-semibold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
             Plan. Publish. Grow.
             <span className="block bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
               All Platforms. One Flow.
@@ -127,7 +127,7 @@ export default function LandingPage() {
             and track results without jumping between tools.
           </p>
 
-          <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:gap-3">
+          <div className="mt-4 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:gap-3">
             <button
               onClick={() => navigate("/register")}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:rounded-2xl sm:px-6 sm:py-3.5"
@@ -155,7 +155,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="order-1 relative h-[220px] sm:h-[260px] lg:order-2 lg:h-[500px] xl:h-[560px]">
+        <section className="order-1 relative h-[205px] overflow-hidden sm:h-[255px] lg:order-2 lg:h-[500px] xl:h-[560px]">
           <div className="pointer-events-none absolute left-6 top-6 h-24 w-24 rounded-full bg-pink-200/35 blur-3xl sm:h-28 sm:w-28 lg:left-12 lg:top-16 lg:h-36 lg:w-36" />
           <div className="pointer-events-none absolute right-4 top-4 h-24 w-24 rounded-full bg-blue-200/30 blur-3xl sm:h-28 sm:w-28 lg:right-10 lg:top-12 lg:h-40 lg:w-40" />
           <div className="pointer-events-none absolute bottom-2 right-10 h-24 w-24 rounded-full bg-cyan-200/30 blur-3xl sm:h-28 sm:w-28 lg:right-20 lg:bottom-10 lg:h-44 lg:w-44" />
@@ -168,6 +168,8 @@ export default function LandingPage() {
                 alt={item.name}
                 className={`absolute ${item.posClass} ${item.sizeClass} ${item.rotate} ${item.z} ${item.shadow} select-none object-contain transition-transform duration-500 hover:scale-105`}
                 draggable={false}
+                loading="eager"
+                decoding="async"
               />
             ))}
           </div>
