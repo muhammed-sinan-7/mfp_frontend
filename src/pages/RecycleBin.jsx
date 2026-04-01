@@ -233,7 +233,7 @@ export default function RecycleBinPage() {
 
   if (loading && page === 1) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-white">
+      <div className="flex flex-col items-center justify-center h-full min-h-[320px] bg-white">
         <div className="w-12 h-12 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         <p className="mt-4 text-slate-500 font-medium tracking-tight">
           Syncing Recycle Bin...
@@ -306,7 +306,8 @@ export default function RecycleBinPage() {
       {/* 03. Scrollable Table Area */}
       <main className="flex-1 overflow-y-auto pb-8">
         <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-6 py-4 w-12">
@@ -400,6 +401,7 @@ export default function RecycleBinPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </main>
 

@@ -141,7 +141,7 @@ export default function PostsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-500">
+      <div className="flex items-center justify-center h-full min-h-[320px] text-gray-500">
         Loading posts...
       </div>
     );
