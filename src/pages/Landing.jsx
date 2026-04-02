@@ -13,8 +13,8 @@ const platformLogos = [
   {
     name: "Instagram",
     logo: "https://img.icons8.com/3d-fluency/512/instagram-new.png",
-    sizeClass: "md:w-40 lg:w-48 xl:w-56",
-    posClass: "md:top-2 md:left-0 lg:top-2 lg:left-10",
+    sizeClass: "w-28 sm:w-36 md:w-40 lg:w-48 xl:w-56",
+    posClass: "top-0 left-2 sm:top-2 sm:left-6 md:top-2 md:left-0 lg:top-2 lg:left-10",
     rotate: "-rotate-[16deg]",
     z: "z-40",
     shadow: "drop-shadow-[0_22px_18px_rgba(15,23,42,0.28)]",
@@ -22,8 +22,8 @@ const platformLogos = [
   {
     name: "Facebook",
     logo: "https://img.icons8.com/3d-fluency/512/facebook-logo.png",
-    sizeClass: "md:w-32 lg:w-40 xl:w-44",
-    posClass: "md:top-12 md:right-1 lg:top-20 lg:right-8",
+    sizeClass: "w-24 sm:w-32 md:w-32 lg:w-40 xl:w-44",
+    posClass: "top-8 right-0 sm:top-10 sm:right-4 md:top-12 md:right-1 lg:top-20 lg:right-8",
     rotate: "rotate-[10deg]",
     z: "z-20",
     shadow: "drop-shadow-[0_18px_15px_rgba(15,23,42,0.24)]",
@@ -31,8 +31,8 @@ const platformLogos = [
   {
     name: "YouTube",
     logo: "https://img.icons8.com/3d-fluency/512/youtube-play.png",
-    sizeClass: "md:w-44 lg:w-56 xl:w-64",
-    posClass: "md:bottom-2 md:left-10 lg:bottom-2 lg:left-16",
+    sizeClass: "w-32 sm:w-44 md:w-44 lg:w-56 xl:w-64",
+    posClass: "bottom-4 left-6 sm:bottom-6 sm:left-10 md:bottom-2 md:left-10 lg:bottom-2 lg:left-16",
     rotate: "-rotate-[7deg]",
     z: "z-50",
     shadow: "drop-shadow-[0_26px_20px_rgba(15,23,42,0.3)]",
@@ -40,8 +40,8 @@ const platformLogos = [
   {
     name: "LinkedIn",
     logo: "https://img.icons8.com/3d-fluency/512/linkedin--v1.png",
-    sizeClass: "md:w-32 lg:w-40 xl:w-44",
-    posClass: "md:bottom-4 md:right-3 lg:bottom-8 lg:right-8",
+    sizeClass: "w-24 sm:w-32 md:w-32 lg:w-40 xl:w-44",
+    posClass: "bottom-10 right-4 sm:bottom-12 sm:right-8 md:bottom-4 md:right-3 lg:bottom-8 lg:right-8",
     rotate: "rotate-[18deg]",
     z: "z-30",
     shadow: "drop-shadow-[0_20px_16px_rgba(15,23,42,0.26)]",
@@ -71,7 +71,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className="relative h-[100dvh] overflow-hidden bg-gradient-to-br from-blue-50 via-white to-sky-100 text-slate-900"
+      className="relative min-h-[100dvh] min-h-screen overflow-x-hidden overflow-y-hidden bg-gradient-to-br from-blue-50 via-white to-sky-100 text-slate-900"
       style={{ fontFamily: '"Sora", "Segoe UI", sans-serif' }}
     >
       <div className="pointer-events-none absolute -left-24 -top-32 -z-10 h-80 w-80 rounded-full bg-blue-200/35 blur-3xl" />
@@ -108,8 +108,8 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="mx-auto h-[calc(100dvh-4rem)] w-full max-w-7xl px-4 sm:h-[calc(100dvh-5rem)] sm:px-6 md:grid md:grid-cols-2 md:items-center md:gap-8">
-        <section className="flex h-full flex-col justify-center py-3 sm:py-5 md:py-0">
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:grid md:h-[calc(100dvh-5rem)] md:grid-cols-2 md:items-center md:gap-8 md:py-0">
+        <section className="flex flex-col justify-center py-3 sm:py-5 md:h-full md:py-0">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 sm:mb-4 sm:px-4 sm:text-xs">
             <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Social Command Center
@@ -143,21 +143,21 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <div className="mt-6 hidden grid-cols-3 gap-3 xl:grid">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
             {features.map((item) => (
-              <div key={item.title} className="rounded-xl bg-white/85 p-3 shadow-sm sm:rounded-2xl sm:p-4">
-                <item.icon className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" />
-                <h3 className="mt-2 text-sm font-semibold text-slate-900 sm:mt-3">{item.title}</h3>
+              <div key={item.title} className="rounded-xl bg-white/85 p-4 shadow-sm sm:rounded-2xl border border-blue-50">
+                <item.icon className="h-5 w-5 text-blue-600" />
+                <h3 className="mt-3 text-sm font-semibold text-slate-900">{item.title}</h3>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.text}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="relative hidden h-[420px] md:block lg:h-[500px] xl:h-[560px]">
-          <div className="pointer-events-none absolute left-8 top-10 h-28 w-28 rounded-full bg-pink-200/35 blur-3xl lg:left-12 lg:top-16 lg:h-36 lg:w-36" />
-          <div className="pointer-events-none absolute right-6 top-8 h-28 w-28 rounded-full bg-blue-200/30 blur-3xl lg:right-10 lg:top-12 lg:h-40 lg:w-40" />
-          <div className="pointer-events-none absolute bottom-6 right-12 h-28 w-28 rounded-full bg-cyan-200/30 blur-3xl lg:right-20 lg:bottom-10 lg:h-44 lg:w-44" />
+        <section className="relative mt-12 h-[340px] sm:h-[400px] md:mt-0 md:h-[420px] lg:h-[500px] xl:h-[560px] w-full">
+          <div className="pointer-events-none absolute left-2 top-4 h-20 w-20 rounded-full bg-pink-200/35 blur-2xl md:left-8 md:top-10 md:h-28 md:w-28 md:blur-3xl lg:left-12 lg:top-16 lg:h-36 lg:w-36" />
+          <div className="pointer-events-none absolute right-4 top-8 h-20 w-20 rounded-full bg-blue-200/30 blur-2xl md:right-6 md:top-8 md:h-28 md:w-28 md:blur-3xl lg:right-10 lg:top-12 lg:h-40 lg:w-40" />
+          <div className="pointer-events-none absolute bottom-6 right-8 h-20 w-20 rounded-full bg-cyan-200/30 blur-2xl md:bottom-6 md:right-12 md:h-28 md:w-28 md:blur-3xl lg:right-20 lg:bottom-10 lg:h-44 lg:w-44" />
 
           <div className="absolute inset-0 [perspective:1500px]">
             {platformLogos.map((item) => (
@@ -175,7 +175,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="absolute bottom-3 left-1/2 hidden -translate-x-1/2 items-center justify-center gap-3 text-xs text-slate-500 md:flex">
+      <footer className="relative w-full py-8 mt-4 flex items-center justify-center gap-3 text-xs text-slate-500">
         <Link to="/terms" className="hover:text-blue-600 hover:underline">
           Terms
         </Link>

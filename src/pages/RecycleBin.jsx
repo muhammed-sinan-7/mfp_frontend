@@ -246,7 +246,7 @@ export default function RecycleBinPage() {
     <div className="flex flex-col min-h-full bg-[#F8FAFC] font-sans text-slate-900">
       {/* 01. Minimal Unified Header (No white BG) */}
       <div className="pb-6 space-y-8">
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
@@ -280,7 +280,7 @@ export default function RecycleBinPage() {
         </div>
 
         {/* 02. Floating Search & Tool Bar */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1 group">
             <div className="absolute inset-y-0 left-4 flex items-center text-slate-400 group-focus-within:text-blue-600 transition-colors">
               <Icons.Search />
@@ -406,11 +406,11 @@ export default function RecycleBinPage() {
       </main>
 
       {/* 04. Minimal Pagination Footer */}
-      <footer className="py-5 bg-white border-t border-slate-200 flex items-center justify-between">
+      <footer className="py-5 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-[13px] font-semibold text-slate-400">
           Page <span className="text-slate-900">{page}</span> of {totalPages}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
           <button
             disabled={page === 1}
             onClick={() => loadPosts(page - 1)}
