@@ -185,7 +185,7 @@ const LinkedInAnalytics = ({
     <div className="w-full font-sans text-gray-900">
       <div>
         {/* Header Section */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">
               LinkedIn Insights
@@ -194,7 +194,7 @@ const LinkedInAnalytics = ({
               Professional network performance and B2B engagement metrics.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
               onClick={handleExport}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm"
@@ -236,10 +236,10 @@ const LinkedInAnalytics = ({
         </div>
 
         {/* Growth & Functions Section */}
-        <div className="grid grid-cols-12 gap-8 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-8">
           {/* Professional Growth Chart */}
-          <div className="col-span-12 lg:col-span-8 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-            <div className="flex justify-between items-center mb-10">
+          <div className="lg:col-span-8 bg-white p-4 sm:p-6 lg:p-8 rounded-[24px] sm:rounded-[32px] border border-gray-100 shadow-sm">
+            <div className="mb-8 sm:mb-10 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
               <div>
                 <h3 className="font-bold text-gray-900">Professional Growth</h3>
                 <p className="text-gray-400 text-[11px]">
@@ -257,7 +257,7 @@ const LinkedInAnalytics = ({
                 </div>
               </div>
             </div>
-            <div className="h-[350px]">
+            <div className="h-[260px] sm:h-[320px] lg:h-[350px]">
               {hasGrowthMetrics ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={growth}>
@@ -302,7 +302,7 @@ const LinkedInAnalytics = ({
           </div>
 
           {/* Top Professional Functions */}
-          <div className="col-span-12 lg:col-span-4 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col">
+          <div className="lg:col-span-4 bg-white p-4 sm:p-6 lg:p-8 rounded-[24px] sm:rounded-[32px] border border-gray-100 shadow-sm flex flex-col">
             <h3 className="font-bold text-gray-900 mb-1">
               Top Professional Functions
             </h3>
@@ -343,8 +343,8 @@ const LinkedInAnalytics = ({
         </div>
 
         {/* Analytics Table */}
-        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-gray-50 flex justify-between items-center">
+        <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-50 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
             <div>
               <h3 className="font-bold text-lg text-gray-900">
                 Recent Post Analytics
@@ -361,7 +361,7 @@ const LinkedInAnalytics = ({
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[760px] text-left">
               <thead className="bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 <tr>
                   <th className="px-8 py-5">Post Title</th>

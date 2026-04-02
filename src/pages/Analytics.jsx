@@ -60,7 +60,7 @@ const LinkedinTab = ({ isConnected }) => {
   );
 };
 
-const YoutubeTab = () => {
+const YoutubeTab = ({ isConnected }) => {
   const youtubeData = useYoutubeAnalytics();
 
   return (
@@ -70,6 +70,7 @@ const YoutubeTab = () => {
       videos={youtubeData.videos}
       trafficSources={youtubeData.trafficSources}
       onRefresh={youtubeData.refetch}
+      isConnected={isConnected}
     />
   );
 };
@@ -125,7 +126,7 @@ const Analytics = () => {
 
       {/* Navigation Tabs */}
       <header className="mb-6">
-        <nav className="mx-auto flex w-full max-w-fit items-center bg-gray-50 rounded-xl p-1 border border-gray-100 overflow-x-auto">
+        <nav className="flex w-full items-center gap-1 rounded-xl border border-gray-100 bg-gray-50 p-1 overflow-x-auto">
           {["overview", "instagram", "linkedin", "youtube"].map((tab) => (
             <button
               key={tab}
@@ -145,7 +146,7 @@ const Analytics = () => {
         </nav>
       </header>
 
-      <main className="space-y-8">
+      <main className="space-y-6 sm:space-y-8">
 
         {platform === "overview" && (
           <OverviewTab connectedPlatforms={connectedPlatforms} />
@@ -159,7 +160,9 @@ const Analytics = () => {
           <LinkedinTab isConnected={connectedPlatformSet.has("linkedin")} />
         )}
 
-        {platform === "youtube" && <YoutubeTab />}
+        {platform === "youtube" && (
+          <YoutubeTab isConnected={connectedPlatformSet.has("youtube")} />
+        )}
 
       </main>
     </div>
