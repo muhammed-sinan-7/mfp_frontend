@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Instagram, Linkedin, Youtube } from "lucide-react";
+import { socialList } from "../services/accountService";
 
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useInstagramAnalytics } from "../hooks/useInstagramAnalytics";
@@ -14,7 +15,7 @@ import YouTubeAnalytics from "../components/analytics/Youtube";
 
 /* ---------------- TAB DATA LOADERS ---------------- */
 
-const OverviewTab = () => {
+const OverviewTab = ({ connectedPlatforms }) => {
   const overviewData = useAnalytics();
 
   return (
@@ -24,11 +25,12 @@ const OverviewTab = () => {
       engagementDistribution={overviewData.engagementDistribution}
       recentPosts={overviewData.recentPosts}
       onRefresh={overviewData.refetch}
+      connectedPlatforms={connectedPlatforms}
     />
   );
 };
 
-const InstagramTab = () => {
+const InstagramTab = ({ isConnected }) => {
   const instagramData = useInstagramAnalytics();
 
   return (
@@ -38,11 +40,12 @@ const InstagramTab = () => {
       topPosts={instagramData.topPosts}
       performance={instagramData.performance}
       onRefresh={instagramData.refetch}
+      isConnected={isConnected}
     />
   );
 };
 
-const LinkedinTab = () => {
+const LinkedinTab = ({ isConnected }) => {
   const linkedinData = useLinkedinAnalytics();
 
   return (
@@ -51,6 +54,8 @@ const LinkedinTab = () => {
       growth={linkedinData.growth}
       posts={linkedinData.posts}
       onRefresh={linkedinData.refetch}
+      isConnected={isConnected}
+      analyticsApproved={false}
     />
   );
 };
@@ -74,6 +79,46 @@ const YoutubeTab = () => {
 const Analytics = () => {
 
   const [platform, setPlatform] = useState("overview");
+  const [connectedPlatforms, setConnectedPlatforms] = useState([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function loadConnections() {
+      try {
+        const response = await socialList();
+        const accounts = response?.data || [];
+        const providers = new Set();
+
+        accounts.forEach((account) => {
+          (account.publishing_targets || []).forEach((target) => {
+            if (target?.provider) {
+              providers.add(String(target.provider).toLowerCase());
+            }
+          });
+        });
+
+        if (mounted) {
+          setConnectedPlatforms(Array.from(providers));
+        }
+      } catch (error) {
+        if (mounted) {
+          setConnectedPlatforms([]);
+        }
+      }
+    }
+
+    loadConnections();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const connectedPlatformSet = useMemo(
+    () => new Set((connectedPlatforms || []).map((provider) => provider.toLowerCase())),
+    [connectedPlatforms],
+  );
 
   return (
     <div className="w-full font-sans text-gray-900">
@@ -102,11 +147,17 @@ const Analytics = () => {
 
       <main className="space-y-8">
 
-        {platform === "overview" && <OverviewTab />}
+        {platform === "overview" && (
+          <OverviewTab connectedPlatforms={connectedPlatforms} />
+        )}
 
-        {platform === "instagram" && <InstagramTab />}
+        {platform === "instagram" && (
+          <InstagramTab isConnected={connectedPlatformSet.has("instagram")} />
+        )}
 
-        {platform === "linkedin" && <LinkedinTab />}
+        {platform === "linkedin" && (
+          <LinkedinTab isConnected={connectedPlatformSet.has("linkedin")} />
+        )}
 
         {platform === "youtube" && <YoutubeTab />}
 

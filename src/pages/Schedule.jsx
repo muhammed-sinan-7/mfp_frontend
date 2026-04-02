@@ -388,8 +388,8 @@ export default function SchedulePage() {
   }, [calendarPosts]);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex flex-1 min-h-0 overflow-hidden flex-col xl:flex-row">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-auto xl:overflow-hidden flex-col xl:flex-row">
         <div className="flex-1 min-w-0 min-h-0 px-0 py-0 sm:px-2 sm:py-1 lg:px-3 lg:py-2">
           <div className="h-full bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
             <CalendarSection
@@ -406,7 +406,7 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        <div className="w-full xl:w-[360px] 2xl:w-[380px] shrink-0 border-t xl:border-t-0 xl:border-l border-gray-200 bg-white min-h-[240px] xl:min-h-0">
+        <div className="w-full xl:w-[360px] 2xl:w-[380px] shrink-0 border-t xl:border-t-0 xl:border-l border-gray-200 bg-white min-h-[220px] xl:min-h-0">
           <DailyAgenda posts={calendarPosts} selectedDate={selectedDate} />
         </div>
       </div>
@@ -428,11 +428,11 @@ export default function SchedulePage() {
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col overflow-hidden">
           {/* HEADER */}
-          <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 lg:px-10 shadow-sm">
+          <div className="min-h-14 sm:min-h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-6 lg:px-10 shadow-sm">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Create Schedule
-              </h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                  Create Schedule
+                </h2>
               <p className="text-xs text-gray-500">
                 Professional multi-platform publishing
               </p>
@@ -455,7 +455,7 @@ export default function SchedulePage() {
               onSelect={handlePlatformSelect}
             />
 
-            <div className="flex-1 flex p-3 sm:p-4 lg:p-8 overflow-auto">
+            <div className="flex-1 flex p-2 sm:p-4 lg:p-8 overflow-auto">
               {!activeTarget && (
                 <div className="flex items-center justify-center w-full text-gray-400">
                   Select a platform to start editing
@@ -480,11 +480,11 @@ export default function SchedulePage() {
           </div>
 
           {/* FOOTER */}
-          <div className="h-20 bg-white border-t border-gray-200 flex items-center justify-end px-4 sm:px-6 lg:px-10 shadow-sm">
-            <div className="flex gap-3 sm:gap-4">
+          <div className="min-h-16 bg-white border-t border-gray-200 flex items-center justify-end px-3 sm:px-6 lg:px-10 py-2 shadow-sm">
+            <div className="flex gap-2 sm:gap-4">
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="px-6 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50"
+                className="px-4 sm:px-6 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50"
               >
                 Cancel
               </button>
@@ -492,7 +492,7 @@ export default function SchedulePage() {
               <button
                 disabled={submitting}
                 onClick={handleSubmit}
-                className={`px-6 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-md  ${submitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
+                className={`px-4 sm:px-6 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-md ${submitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
               >
                 {submitting
                   ? "Scheduling..."

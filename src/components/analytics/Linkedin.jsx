@@ -23,11 +23,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const LinkedInAnalytics = ({ overview, growth, posts, onRefresh }) => {
+const LinkedInAnalytics = ({
+  overview,
+  growth,
+  posts,
+  onRefresh,
+  isConnected = true,
+  analyticsApproved = false,
+}) => {
   const navigate = useNavigate();
   const hasGrowthMetrics = (growth || []).length > 0;
   const hasPostMetrics = (posts || []).length > 0;
-  const hasData = Boolean(overview) || hasGrowthMetrics || hasPostMetrics;
   // Mock data for the "Top Professional Functions" chart as per the image
   const professionalFunctions = [
     { role: "Engineering", width: "95%", color: "bg-[#7C3AED]" },
@@ -110,20 +116,65 @@ const LinkedInAnalytics = ({ overview, growth, posts, onRefresh }) => {
     }
     window.open(postUrl, "_blank", "noopener,noreferrer");
   };
-  if (!hasData) {
+  if (!analyticsApproved) {
     return (
       <div className="w-full flex items-center justify-center py-16">
-        <div className="bg-white border border-blue-100 rounded-2xl p-10 text-center shadow-sm max-w-lg">
+        <div className="bg-white border border-blue-100 rounded-2xl p-8 sm:p-10 text-center shadow-sm max-w-lg">
           <h2 className="text-lg font-bold text-gray-900 mb-2">
-            LinkedIn Analytics Unavailable
+            LinkedIn Analytics Coming Soon
           </h2>
           <p className="text-gray-500 text-sm">
-            LinkedIn currently restricts analytics access for most apps. Posting
-            and scheduling are supported, but engagement analytics require
-            additional LinkedIn permissions.
+            LinkedIn currently restricts analytics access for many apps. We will enable
+            full insights once platform approval is granted.
           </p>
+          {!isConnected && (
+            <p className="mt-3 text-xs text-gray-500">
+              Connect your LinkedIn account now so it is ready when analytics access is enabled.
+            </p>
+          )}
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => navigate("/accounts")}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+            >
+              Connect Account
+            </button>
+            <button
+              onClick={() => navigate("/schedule")}
+              className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+            >
+              Schedule Post
+            </button>
+          </div>
           <div className="mt-6 text-xs text-gray-400">
-            Once LinkedIn grants analytics access, insights will appear here.
+            Once approved, analytics cards and charts will appear here automatically.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isConnected) {
+    return (
+      <div className="w-full flex items-center justify-center py-16">
+        <div className="bg-white border border-blue-100 rounded-2xl p-8 text-center shadow-sm max-w-lg">
+          <h2 className="text-lg font-bold text-gray-900">Connect LinkedIn first</h2>
+          <p className="mt-2 text-sm text-gray-500">
+            Connect your LinkedIn account and schedule at least one post to start collecting data.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => navigate("/accounts")}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+            >
+              Connect Account
+            </button>
+            <button
+              onClick={() => navigate("/schedule")}
+              className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+            >
+              Schedule Post
+            </button>
           </div>
         </div>
       </div>

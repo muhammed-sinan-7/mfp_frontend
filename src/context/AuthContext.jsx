@@ -77,6 +77,7 @@ const buildUserFromAuthPayload = (payload) => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => loadStoredUser());
   const [loading, setLoading] = useState(true);
+  const AUTH_BOOTSTRAP_TIMEOUT_MS = 8000;
   const publicPaths = [
     "/",
     "/login",
@@ -98,6 +99,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
+      let finished = false;
+      const timeoutId = window.setTimeout(() => {
+        if (!finished) {
+          setLoading(false);
+        }
+      }, AUTH_BOOTSTRAP_TIMEOUT_MS);
+
       const pathname = window.location.pathname;
       const isPublicPath = publicPaths.some(
         (path) => pathname === path || pathname.startsWith(`${path}/`),
@@ -106,8 +114,10 @@ export const AuthProvider = ({ children }) => {
       const hasAccessToken = Boolean(getAccessToken());
       const hasStoredSession = Boolean(storedUser?.isAuthenticated);
 
-      // Keep anonymous public pages fast; only reconcile when there is session state.
-      if (isPublicPath && !hasStoredSession && !hasAccessToken) {
+      // On public routes, never trust stale stored user without an access token.
+      // This prevents protected dashboard mounts (and 401 spam) on /login.
+      if (isPublicPath && !hasAccessToken) {
+        setUser(null);
         setLoading(false);
         return;
       }
@@ -119,11 +129,18 @@ export const AuthProvider = ({ children }) => {
       if (hasAccessToken) {
         try {
           await syncCurrentUser();
+          setLoading(false);
           return;
         } catch (error) {
-          clearAuthStorage();
-          setUser(null);
-          persistUser(null);
+          const status = error?.response?.status;
+          if (status === 401) {
+            clearAuthStorage();
+            setUser(null);
+            persistUser(null);
+          } else if (hasStoredSession) {
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -143,10 +160,15 @@ export const AuthProvider = ({ children }) => {
           await syncCurrentUser();
         }
       } catch (error) {
-        clearAuthStorage();
-        setUser(null);
-        persistUser(null);
+        const status = error?.response?.status;
+        if (status === 401) {
+          clearAuthStorage();
+          setUser(null);
+          persistUser(null);
+        }
       } finally {
+        finished = true;
+        window.clearTimeout(timeoutId);
         setLoading(false);
       }
     };
@@ -213,9 +235,11 @@ export const AuthProvider = ({ children }) => {
           persistUser(nextUser);
         }
       } catch (error) {
-        clearAuthStorage();
-        setUser(null);
-        persistUser(null);
+        if (error?.response?.status === 401) {
+          clearAuthStorage();
+          setUser(null);
+          persistUser(null);
+        }
       }
     }, 10 * 60 * 1000);
 
