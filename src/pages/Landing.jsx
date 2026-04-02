@@ -110,10 +110,7 @@ export default function LandingPage() {
 
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:grid md:h-[calc(100dvh-5rem)] md:grid-cols-2 md:items-center md:gap-8 md:py-0">
         <section className="flex flex-col justify-center py-3 sm:py-5 md:h-full md:py-0">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 sm:mb-4 sm:px-4 sm:text-xs">
-            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            Social Command Center
-          </div>
+          
 
           <h1 className="max-w-xl text-[1.8rem] font-semibold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
             Plan. Publish. Grow.
